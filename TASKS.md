@@ -21,7 +21,7 @@
   - 확인: 주입 문장 → `Sorry, I can't process that request.`, 정상 질문 통과, `trace.jsonl` 기록
 - [x] **T8 평가셋** 1단계 20문항(참조 답변 포함) + `run_eval.py` 수정 (1h)
   - 확인: `python -m evaluation.run_eval --round 0` → 규칙 판정 결과가 담긴 `eval_result_round0.json` 생성 (시험 실행)
-- [ ] **T9 LLM judge + RAGAS 지표** `evaluation/judge.py` + 라운드 보고서 자동 생성 (1h)
+- [x] **T9 LLM judge + RAGAS 지표** `evaluation/judge.py` + 라운드 보고서 자동 생성 (1h)
   - 확인: 문항 2~3개로 judge 점수와 RAGAS 4개 지표(0~1)가 나오고 `round0_report.md` 생성
 - [ ] **T10 라운드 1 평가** (0.5h)
   - 확인: `evaluation/round1_report.md`에 유형별 통과율, S1~S11 충족 여부, RAGAS 평균, 실패 원인, 개선 계획 기록

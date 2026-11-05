@@ -28,9 +28,10 @@ def get_fallback_models() -> list[ChatBedrockConverse]:
     return [_chat(m, r) for m, r in config.CHAT_FALLBACKS]
 
 
-def get_light_llm() -> ChatBedrockConverse:
-    """가벼운 작업용(입력 가드레일 LLM 판별)."""
-    return _chat(*config.LIGHT_MODEL)
+def get_light_llm(with_fallbacks: bool = True):
+    """가벼운 작업용(입력 가드레일 LLM 판별). 한도에 걸리면 같은 모델의 다른 리전으로 넘어간다."""
+    primary = _chat(*config.LIGHT_MODEL)
+    return primary.with_fallbacks([_chat(*config.LIGHT_FALLBACK)]) if with_fallbacks else primary
 
 
 def get_judge_llm() -> ChatBedrockConverse:

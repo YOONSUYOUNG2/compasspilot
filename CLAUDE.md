@@ -22,15 +22,16 @@
 
 | 용도 | 모델 | 리전 |
 |------|------|------|
-| 기본 (Supervisor, 하위 에이전트, 산출물 추출) | `us.anthropic.claude-sonnet-4-5-20250929-v1:0`, temperature 0 | us-east-1 |
-| 대체 1 (호출 실패·throttling 시) | 같은 모델 | us-west-2 |
+| 기본 (Supervisor, 하위 에이전트, 산출물 추출) | `us.anthropic.claude-sonnet-4-5-20250929-v1:0`, temperature 0 | **us-west-2** |
+| 대체 1 (호출 실패·throttling 시) | 같은 모델 | us-east-1 |
 | 대체 2 | `global.anthropic.claude-sonnet-4-5-20250929-v1:0` | us-east-1 |
 | 대체 3 | `us.anthropic.claude-sonnet-4-6` | us-east-1 |
-| 가벼운 작업 (입력 가드레일 LLM 판별) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` | us-east-1 |
-| 평가 심사(judge) | Sonnet 4.5 **고정, 대체 없음** | us-east-1 |
+| 가벼운 작업 (입력 가드레일 LLM 판별) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (대체: 같은 모델 us-west-2) | us-east-1 |
+| 평가 심사(judge) | Sonnet 4.5 **고정, 대체 없음** | **us-west-2** |
 | 임베딩 | `amazon.titan-embed-text-v2:0` | us-east-1 |
 
 - 대체 모델은 `langchain_core`의 `with_fallbacks`로 연결한다.
+- 2026-11-05 us-east-1 Sonnet 4.5의 하루 토큰 한도 소진으로 기본·judge 리전을 us-west-2로 바꿨다(사용자 승인, 라운드 1 평가 전). 모델과 파라미터는 같다.
 - Nova, gpt-oss 모델은 쓰지 않는다. 목록에 없는 모델(예: Claude 3.5 Sonnet)도 쓰지 않는다.
 - 재평가는 같은 모델·파라미터로 한다. 평가 중에는 모델 설정을 바꾸지 않는다.
 

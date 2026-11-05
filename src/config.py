@@ -34,14 +34,16 @@ HAIKU_45_US = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 TITAN_EMBED = "amazon.titan-embed-text-v2:0"
 
 # 기본 모델과 대체 순서: (모델 ID, 리전)
-CHAT_PRIMARY = (SONNET_45_US, "us-east-1")
+# 2026-11-05 us-east-1 Sonnet 4.5 하루 토큰 한도 소진 → 기본·judge를 us-west-2로 전환(같은 모델·파라미터)
+CHAT_PRIMARY = (SONNET_45_US, "us-west-2")
 CHAT_FALLBACKS = [
-    (SONNET_45_US, "us-west-2"),        # 대체 1: 리전별 사용량 한도가 따로라 throttling 회피
+    (SONNET_45_US, "us-east-1"),        # 대체 1: 리전별 사용량 한도가 따로라 throttling 회피
     (SONNET_45_GLOBAL, "us-east-1"),    # 대체 2
     (SONNET_46_US, "us-east-1"),        # 대체 3
 ]
-LIGHT_MODEL = (HAIKU_45_US, "us-east-1")   # 입력 가드레일 LLM 판별
-JUDGE_MODEL = (SONNET_45_US, "us-east-1")  # 평가 심사: 고정, 대체 없음
+LIGHT_MODEL = (HAIKU_45_US, "us-east-1")           # 입력 가드레일 LLM 판별
+LIGHT_FALLBACK = (HAIKU_45_US, "us-west-2")
+JUDGE_MODEL = (SONNET_45_US, "us-west-2")          # 평가 심사: 고정, 대체 없음
 EMBED_MODEL = (TITAN_EMBED, "us-east-1")
 
 # ── 고정 문구 (evaluation/run_eval.py 판정 신호와 맞춘다) ────────────────────
