@@ -9,7 +9,7 @@
   - 확인: `python -m src.llm` → Sonnet 응답 1줄 + Titan 임베딩 차원(1024) 출력. Python 3.14에서 설치가 실패하면 사용자에게 3.12 설치 여부 확인
 - [x] **T2 Excel 파서** + 버전 등록(`data/private/versions/`) + 테스트 (1h)
   - 확인: unittest 통과 — 2025-08 판 47개·2026-08 판 55개, Validity Period로 버전 구분, 같은 버전 중복 거절, internal_note 분리
-- [ ] **T3 버전 비교** `diff.py`(두 버전 지정, 기본 최신 vs 직전) + 테스트 (1h)
+- [x] **T3 버전 비교** `diff.py`(두 버전 지정, 기본 최신 vs 직전) + 테스트 (1h)
   - 확인: unittest가 SERVICE.md 5.1 정답표(2025-08 → 2026-08)와 100% 일치 (S2)
 - [ ] **T4 Chroma 색인** + `search_requirements` (1h)
   - 확인: `python -m src.rag.index` 후 평가 1~9번 질문 검색 시 상위 결과에 기대 ID 8개 이상 (S3 사전 점검)
