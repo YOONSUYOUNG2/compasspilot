@@ -16,7 +16,8 @@ from pydantic import BaseModel, Field
 from src.llm import get_embeddings, get_judge_llm
 
 KO_SECTION = "### 한국어 번역"
-MAX_CONTEXT_CHARS = 12000  # judge 입력 길이 상한 (Bedrock 토큰 한도 throttling 방지)
+# judge 입력 길이 상한. 버전 비교 JSON(약 18,000자)이 잘리지 않아야 한다(라운드 1에서 12,000자로 잘려 측정 오류 발생).
+MAX_CONTEXT_CHARS = 24000
 
 
 # ── 루브릭 심사 (교안 llm_judge.py) ─────────────────────────────────────────
