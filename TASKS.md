@@ -15,7 +15,7 @@
   - 확인: `python -m src.rag.index` 후 평가 1~9번 질문 검색 시 상위 결과에 기대 ID 8개 이상 (S3 사전 점검)
 - [x] **T5 MCP 서버** (`diff_versions`) (0.5h)
   - 확인: MCP 클라이언트로 도구 목록 조회·호출 → 추가 8건 확인
-- [ ] **T6 Supervisor** + 하위 에이전트 3개 + CLI (1h)
+- [x] **T6 Supervisor** + 하위 에이전트 3개 + CLI (1h)
   - 확인: `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` → 영문 답변 + `### 한국어 번역`, 8개 ID 포함 (S1)
 - [ ] **T7 입력 가드레일** + FileTracer (1h)
   - 확인: 주입 문장 → `Sorry, I can't process that request.`, 정상 질문 통과, `trace.jsonl` 기록

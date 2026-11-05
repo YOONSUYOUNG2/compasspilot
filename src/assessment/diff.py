@@ -82,8 +82,9 @@ def compare(old: dict, new: dict) -> dict:
     old_reqs = {r["id"]: r for r in old["requirements"]}
     new_reqs = {r["id"]: r for r in new["requirements"]}
 
-    added = [_brief(r) for rid, r in new_reqs.items() if rid not in old_reqs]
-    removed = [_brief(r) for rid, r in old_reqs.items() if rid not in new_reqs]
+    # 추가·삭제 항목은 AWS 원문(text)을 함께 넣어, 설명을 원문 근거로 쓰게 한다
+    added = [{**_brief(r), "text": r["text"]} for rid, r in new_reqs.items() if rid not in old_reqs]
+    removed = [{**_brief(r), "text": r["text"]} for rid, r in old_reqs.items() if rid not in new_reqs]
     changed, unchanged = [], 0
     for rid, nr in new_reqs.items():
         if rid not in old_reqs:

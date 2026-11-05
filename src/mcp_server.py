@@ -8,9 +8,15 @@
 클라이언트(agents.py)가 자식 프로세스로 띄운다: python -m src.mcp_server
 """
 import json
+import os
 import sys
+import warnings
 
-from fastmcp import FastMCP
+# fastmcp가 import될 때 authlib가 경고를 '항상 표시'로 강제 등록하므로, import 동안만 경고 출력을 막는다.
+_show = warnings.showwarning
+warnings.showwarning = lambda *args, **kwargs: None
+from fastmcp import FastMCP  # noqa: E402
+warnings.showwarning = _show
 
 from src import config
 from src.assessment import diff, parser
@@ -24,6 +30,8 @@ MCP_SERVER_CONFIG = {
         "args": ["-m", "src.mcp_server"],
         "transport": "stdio",
         "cwd": str(config.ROOT),
+        # 서버 프로세스의 라이브러리 경고와 시작 로그를 줄인다(stderr 출력 정리)
+        "env": {**os.environ, "PYTHONWARNINGS": "ignore", "FASTMCP_LOG_LEVEL": "WARNING"},
     }
 }
 
