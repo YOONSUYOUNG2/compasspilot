@@ -1,0 +1,23 @@
+# 비밀 키
+.env
+
+# 대외비 원본 데이터 (실제 Assessment Excel 등)
+data/private/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 실행 산출물
+chroma_db/
+*.jsonl
+guard_audit.log
+
+# 교안 레퍼런스 코드 (public 저장소에 올리지 않음, 로컬 참고용)
+ref/
+
+# 실제 Excel에서 파생된 결과물 (원문 포함 가능)
+data/derived/
+reports/
