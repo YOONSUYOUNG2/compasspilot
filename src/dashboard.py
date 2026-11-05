@@ -878,15 +878,17 @@ function renderHome() {
 
 // 위치 지도: 가로 Competency 수, 세로 AWS 자격 인원. 다음 등급 기준 영역을 칠하고, 우리 회사가 그 영역으로 들어가는 경로를 화살표로 그린다
 function scatterMap(B, nt, P) {
-  const W = 960, H = 400, L = 64, R = 40, T = 40, Bm = 48;
+  const W = 960, H = 480, L = 64, R = 40, T = 40, Bm = 48;
   const rows = B.table, req = nt ? Object.fromEntries(nt.conditions.map(c => [c.metric, c.required])) : null;
   const xmax = Math.max(...rows.map(r => r.competencies), req ? req.competencies : 0) + 1;
-  const ymax = Math.ceil(Math.max(...rows.map(r => r.certified_people), req ? req.certified_people : 0) * 1.1 / 100) * 100;
-  const X = v => L + v / xmax * (W - L - R), Y = v => T + (1 - v / ymax) * (H - T - Bm);
+  // 세로축은 0이 아니라 데이터 근처에서 시작한다(산점도는 0 기준이 필요 없다). 가까운 회사 점이 겹치지 않게 간격을 벌린다
+  const ys = rows.map(r => r.certified_people).concat(req ? [req.certified_people] : []);
+  const ymax = Math.ceil(Math.max(...ys) * 1.05 / 100) * 100, ymin = Math.floor(Math.min(...ys) * 0.6 / 100) * 100;
+  const X = v => L + v / xmax * (W - L - R), Y = v => T + (1 - (v - ymin) / (ymax - ymin)) * (H - T - Bm);
   const s = svg('svg', {viewBox: '0 0 ' + W + ' ' + H, width: '100%', role: 'img',
     class: 'scatter', 'aria-label': '위치 지도: ' + rows.map(r => r.company + ' Competency ' + r.competencies + ', 자격 ' + r.certified_people).join(' / ')});
   const txt = (x, y, t, attrs) => { const e = svg('text', {x, y, ...(attrs || {})}); e.textContent = t; s.append(e); return e; };
-  for (const v of [0, ymax / 2, ymax]) { s.append(svg('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--line)', 'stroke-width': 1}));
+  for (const v of [ymin, (ymin + ymax) / 2, ymax]) { s.append(svg('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--line)', 'stroke-width': 1}));
     txt(L - 8, Y(v) + 4, String(v), {'text-anchor': 'end'}); }
   for (let v = 0; v <= xmax; v += xmax > 10 ? 2 : 1) txt(X(v), H - Bm + 18, String(v), {'text-anchor': 'middle'});
   txt((L + W - R) / 2, H - 6, 'Competency 수 →', {'text-anchor': 'middle', style: 'font-weight:600'});
@@ -914,7 +916,7 @@ function scatterMap(B, nt, P) {
   for (const r of rows.slice().sort((a, b) => a.is_us - b.is_us)) {  // 우리 회사를 맨 위에 그린다
     const cx = X(r.competencies), cy = Y(r.certified_people);
     const near = !r.is_us && Math.abs(cy - usY) < 18 && Math.abs(cx - usX) < 40;  // 우리 회사 점과 가까우면 라벨을 아래로
-    const dot = svg('circle', {cx, cy, r: r.is_us ? 9 : 6, fill: tierColor(r.tier), stroke: r.is_us ? 'var(--fg)' : 'var(--card)', 'stroke-width': r.is_us ? 2.5 : 2});
+    const dot = svg('circle', {cx, cy, r: r.is_us ? 7 : 5, fill: tierColor(r.tier), stroke: r.is_us ? 'var(--fg)' : 'var(--card)', 'stroke-width': r.is_us ? 2.5 : 2});
     s.append(hover(dot, r.company + ' · ' + r.tier + ' · Competency ' + r.competencies + ' · 자격 ' + r.certified_people + '명'));
     txt(r.is_us ? cx - 14 : (near ? cx : cx + 11), r.is_us ? cy + 4 : (near ? cy + 20 : cy + 4), r.company,
       r.is_us ? {'text-anchor': 'end', style: 'fill:var(--fg);font-weight:700;font-size:14px'} : (near ? {'text-anchor': 'middle'} : {}));
