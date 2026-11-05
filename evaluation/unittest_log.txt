@@ -1,0 +1,116 @@
+# CompassPilot unittest 실행 기록
+# 실행: python -m unittest discover -s tests -v
+# 일시: 2026-11-05 15:20 (KST), Python 3.14.8, 커밋 2d65399
+# 실제 Assessment Excel(data/private, git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 Excel이 필요한 테스트가 skip된다.
+
+test_already_has_phrase (test_answer_rules.TestNotCoveredPhrase.test_already_has_phrase) ... ok
+test_korean_section_ignored (test_answer_rules.TestNotCoveredPhrase.test_korean_section_ignored) ... ok
+test_normal_answer_untouched (test_answer_rules.TestNotCoveredPhrase.test_normal_answer_untouched) ... ok
+test_paraphrase_gets_fixed_phrase (test_answer_rules.TestNotCoveredPhrase.test_paraphrase_gets_fixed_phrase) ... ok
+test_last_agent_report (test_answer_rules.TestRepairReason.test_last_agent_report) ... ok
+test_missing_english (test_answer_rules.TestRepairReason.test_missing_english) ... ok
+test_normal_answer (test_answer_rules.TestRepairReason.test_normal_answer) ... ok
+test_not_covered_but_agent_cited (test_answer_rules.TestRepairReason.test_not_covered_but_agent_cited) ... ok
+test_real_not_covered_is_kept (test_answer_rules.TestRepairReason.test_real_not_covered_is_kept) ... ok
+test_real_refusal_is_kept (test_answer_rules.TestRepairReason.test_real_refusal_is_kept) ... ok
+test_refusal_but_tool_gave_roster (test_answer_rules.TestRepairReason.test_refusal_but_tool_gave_roster) ... ok
+test_kept_with_diff_versions (test_answer_rules.TestStripNotes.test_kept_with_diff_versions) ... ok
+test_removed_without_note_tool (test_answer_rules.TestStripNotes.test_removed_without_note_tool) ... ok
+test_deliverables_section (test_dashboard.TestDashboard.test_deliverables_section) ... ok
+test_diff_counts_match_answer_table (test_dashboard.TestDashboard.test_diff_counts_match_answer_table) ... ok
+test_difficulty_section (test_dashboard.TestDashboard.test_difficulty_section) ... ok
+test_no_employee_names (test_dashboard.TestDashboard.test_no_employee_names) ... ok
+test_self_contained (test_dashboard.TestDashboard.test_self_contained) ... ok
+test_version_dropdown_data (test_dashboard.TestDashboard.test_version_dropdown_data) ... ok
+test_script_tag_in_data_is_escaped (test_dashboard.TestRenderEscaping.test_script_tag_in_data_is_escaped) ... ok
+test_missing_file_message (test_deliverables.TestLookup.test_missing_file_message) ... ok
+test_reads_only_stored_file (test_deliverables.TestLookup.test_reads_only_stored_file) ... ok
+test_real_store_covers_all_versions (test_deliverables.TestLookup.test_real_store_covers_all_versions) ... ok
+test_scope_filter (test_deliverables.TestLookup.test_scope_filter) ... ok
+test_summary_counts (test_deliverables.TestLookup.test_summary_counts) ... ok
+test_checklist_text (test_deliverables.TestRecord.test_checklist_text) ... ok
+test_customer_examples_rules (test_deliverables.TestRecord.test_customer_examples_rules) ... ok
+test_null_string_from_model (test_deliverables.TestRecord.test_null_string_from_model) ... ok
+test_quote_verified_ignoring_bullets_and_quotes (test_deliverables.TestRecord.test_quote_verified_ignoring_bullets_and_quotes) ... ok
+test_unverified_quote_is_flagged (test_deliverables.TestRecord.test_unverified_quote_is_flagged) ... ok
+test_added (test_diff.TestAnswerTable.test_added) ... ok
+test_default_is_previous_vs_latest (test_diff.TestAnswerTable.test_default_is_previous_vs_latest) ... ok
+test_internal_note_attached (test_diff.TestAnswerTable.test_internal_note_attached) ... ok
+test_minor (test_diff.TestAnswerTable.test_minor) ... ok
+test_removed (test_diff.TestAnswerTable.test_removed) ... ok
+test_sheet_note (test_diff.TestAnswerTable.test_sheet_note) ... ok
+test_substantive (test_diff.TestAnswerTable.test_substantive) ... ok
+test_totals (test_diff.TestAnswerTable.test_totals) ... ok
+test_compare_structure (test_diff.TestClassify.test_compare_structure) ... ok
+test_different_word_is_substantive (test_diff.TestClassify.test_different_word_is_substantive) ... ok
+test_notation_case_and_punctuation (test_diff.TestClassify.test_notation_case_and_punctuation) ... ok
+test_typo (test_diff.TestClassify.test_typo) ... ok
+test_unchanged (test_diff.TestClassify.test_unchanged) ... ok
+test_word_added_is_substantive (test_diff.TestClassify.test_word_added_is_substantive) ... ok
+test_cases_conversion (test_difficulty.TestReadinessRules.test_cases_conversion) ... ok
+test_company_status_used_as_is (test_difficulty.TestReadinessRules.test_company_status_used_as_is) ... ok
+test_invalid_values_raise (test_difficulty.TestReadinessRules.test_invalid_values_raise) ... ok
+test_missing_is_not_ready (test_difficulty.TestReadinessRules.test_missing_is_not_ready) ... ok
+test_expected_items (test_difficulty.TestRealData.test_expected_items) ... ok
+test_first_version_has_no_new_bonus (test_difficulty.TestRealData.test_first_version_has_no_new_bonus) ... ok
+test_unknown_id (test_difficulty.TestRealData.test_unknown_id) ... ok
+test_whole_version (test_difficulty.TestRealData.test_whole_version) ... ok
+test_all_combinations (test_difficulty.TestScoreRules.test_all_combinations)
+준비 상태 3 × 범위 2 × 신규 여부 2 = 12개 조합 모두 규칙대로. ... ok
+test_level_bands (test_difficulty.TestScoreRules.test_level_bands) ... ok
+test_records_and_mask_hook (test_guard_tracer.TestFileTracer.test_records_and_mask_hook) ... ok
+test_blocks_injection (test_guard_tracer.TestRuleCheck.test_blocks_injection) ... ok
+test_passes_normal (test_guard_tracer.TestRuleCheck.test_passes_normal) ... ok
+test_refusal_starts_with_fixed_phrase (test_guard_tracer.TestRuleCheck.test_refusal_starts_with_fixed_phrase) ... ok
+test_all_directory_names_masked (test_masking.TestMasking.test_all_directory_names_masked) ... ok
+test_mask_name (test_masking.TestMasking.test_mask_name) ... ok
+test_non_names_untouched (test_masking.TestMasking.test_non_names_untouched) ... ok
+test_roster_text_masked (test_masking.TestMasking.test_roster_text_masked) ... ok
+test_trace_has_no_names (test_masking.TestMasking.test_trace_has_no_names) ... ok
+test_assess_difficulty (test_mcp.TestMcpServer.test_assess_difficulty) ... ok
+test_list_deliverables (test_mcp.TestMcpServer.test_list_deliverables) ... ok
+test_tools_and_default_diff (test_mcp.TestMcpServer.test_tools_and_default_diff) ... ok
+test_unknown_version (test_mcp.TestMcpServer.test_unknown_version) ... ok
+test_counts (test_parser.TestParserRealFiles.test_counts) ... ok
+test_internal_notes (test_parser.TestParserRealFiles.test_internal_notes) ... ok
+test_no_korean_in_aws_text (test_parser.TestParserRealFiles.test_no_korean_in_aws_text) ... ok
+test_sheet_notes_and_areas (test_parser.TestParserRealFiles.test_sheet_notes_and_areas) ... ok
+test_unique_ids (test_parser.TestParserRealFiles.test_unique_ids) ... ok
+test_versions (test_parser.TestParserRealFiles.test_versions) ... ok
+test_area (test_parser.TestParserSynthetic.test_area) ... ok
+test_ids_and_titles (test_parser.TestParserSynthetic.test_ids_and_titles) ... ok
+test_internal_note_split (test_parser.TestParserSynthetic.test_internal_note_split) ... ok
+test_sheet_notes (test_parser.TestParserSynthetic.test_sheet_notes) ... ok
+test_version (test_parser.TestParserSynthetic.test_version) ... ok
+test_duplicate_version_rejected (test_parser.TestVersionRegistry.test_duplicate_version_rejected) ... ok
+test_empty (test_rag.TestRagFormat.test_empty) ... ok
+test_format_has_source_and_document_tag (test_rag.TestRagFormat.test_format_has_source_and_document_tag) ... ok
+test_internal_note_not_in_chunk (test_rag.TestRagFormat.test_internal_note_not_in_chunk) ... ok
+test_metadata (test_rag.TestRagFormat.test_metadata) ... ok
+test_no_tool_output_unchanged (test_report.TestAppendix.test_no_tool_output_unchanged) ... ok
+test_tables_from_tool_output (test_report.TestAppendix.test_tables_from_tool_output) ... ok
+test_detection (test_report.TestReportRules.test_detection) ... ok
+test_split_removes_notes_from_english (test_report.TestReportRules.test_split_removes_notes_from_english) ... ok
+test_topic_slug (test_report.TestReportRules.test_topic_slug) ... ok
+test_files_written (test_report.TestSaveReport.test_files_written) ... ok
+test_same_day_same_topic_not_overwritten (test_report.TestSaveReport.test_same_day_same_topic_not_overwritten) ... ok
+test_other_division (test_workforce.TestRefusals.test_other_division) ... ok
+test_other_group (test_workforce.TestRefusals.test_other_group) ... ok
+test_other_team (test_workforce.TestRefusals.test_other_team) ... ok
+test_other_than_mine (test_workforce.TestRefusals.test_other_than_mine) ... ok
+test_staff_and_unknown (test_workforce.TestRefusals.test_staff_and_unknown) ... ok
+test_unknown_org (test_workforce.TestRefusals.test_unknown_org) ... ok
+test_division_head (test_workforce.TestScopes.test_division_head) ... ok
+test_group_leader (test_workforce.TestScopes.test_group_leader) ... ok
+test_hr_company_wide (test_workforce.TestScopes.test_hr_company_wide) ... ok
+test_narrowing_inside_scope (test_workforce.TestScopes.test_narrowing_inside_scope) ... ok
+test_team_leader (test_workforce.TestScopes.test_team_leader) ... ok
+test_count_has_no_names (test_workforce.TestTools.test_count_has_no_names) ... ok
+test_no_config_is_staff (test_workforce.TestTools.test_no_config_is_staff) ... ok
+test_user_from_config (test_workforce.TestTools.test_user_from_config) ... ok
+test_user_id_not_an_argument (test_workforce.TestTools.test_user_id_not_an_argument) ... ok
+
+----------------------------------------------------------------------
+Ran 105 tests in 18.360s
+
+OK

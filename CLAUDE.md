@@ -183,6 +183,7 @@ python -m evaluation.run_eval --round 1
   - 보고서에는 답변 전문과 `internal_note`를 넣지 않는다(공개 저장소).
 - 평가셋은 SERVICE.md 5.2와 같아야 한다. 1단계 20문항으로 시작하고, 2단계 기능을 붙일 때 해당 문항을 추가한다. 문항을 바꾸면 SERVICE.md도 함께 고친다.
 - 제출 증빙: `evaluation/eval_result.json`, `trace.jsonl`, `docs/architecture.md`(`app.get_graph().draw_mermaid()`), unittest 실행 로그.
+  - `evaluation/eval_result.json`은 공개용 요약이다: `python -m evaluation.run_eval --round N --export-public`. 답변 전문·검색 원문·judge 사유를 빼고 판정·도구·점수·집계만 남긴다. 전체 결과 `eval_result_round<N>.json`은 로컬 전용(git 제외)이다.
 - 실제 Excel은 git에 없어 다른 환경에서는 S2 테스트가 skip된다. 그래서 로컬 unittest 실행 결과를 `evaluation/unittest_log.txt`로 남긴다.
 
 ## 7. Git

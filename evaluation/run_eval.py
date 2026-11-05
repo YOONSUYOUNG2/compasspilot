@@ -321,6 +321,30 @@ def print_summary(data: dict):
     print(f"-> {result_path(data['round'])}\n-> {report_path(data['round'])}")
 
 
+PUBLIC_RESULT_PATH = config.EVAL_DIR / "eval_result.json"
+PUBLIC_FIELDS = ("id", "type", "question", "user_id", "passed", "detail", "status", "tools", "agents", "latency_s", "ragas")
+
+
+def export_public(round_no: int, out_path=PUBLIC_RESULT_PATH) -> str:
+    """공개 저장소용 결과(evaluation/eval_result.json)를 만든다.
+
+    답변 전문·검색 원문(contexts)·judge 사유는 대외비 원문, 내부 메모, 권한 명단의 이름을 담을 수 있으므로 넣지 않는다.
+    문항·판정·도구·에이전트·점수·집계만 남긴다. 전체 결과는 eval_result_round<N>.json(로컬 전용)에 있다.
+    """
+    data = json.loads(result_path(round_no).read_text(encoding="utf-8"))
+    results = []
+    for r in data["results"]:
+        item = {k: r.get(k) for k in PUBLIC_FIELDS}
+        judge = r.get("judge") or {}
+        item["judge"] = {"score": judge.get("score"), "is_correct": judge.get("is_correct")} if judge else None
+        results.append(item)
+    public = {"round": data["round"], "run_at": data.get("run_at"), "model": data.get("model"),
+              "note": "공개용 요약: 답변 전문·검색 원문·judge 사유는 제외(대외비 원문·내부 메모·명단 보호)",
+              "summary": data["summary"], "results": results}
+    out_path.write_text(json.dumps(public, ensure_ascii=False, indent=1), encoding="utf-8")
+    return str(out_path)
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
@@ -328,6 +352,11 @@ if __name__ == "__main__":
     ap.add_argument("--ids", default="", help="일부 문항만 실행 (예: 1,12,17)")
     ap.add_argument("--no-judge", action="store_true", help="LLM judge·RAGAS 생략")
     ap.add_argument("--judge-only", action="store_true", help="저장된 결과로 judge·보고서만 다시 생성")
+    ap.add_argument("--export-public", action="store_true",
+                    help="평가는 다시 하지 않고, 그 라운드 결과로 공개용 evaluation/eval_result.json만 만든다")
     args = ap.parse_args()
+    if args.export_public:
+        print("->", export_public(args.round))
+        sys.exit(0)
     ids = {int(x) for x in args.ids.split(",") if x.strip()} or None
     print_summary(asyncio.run(run(args.round, ids, not args.no_judge, args.judge_only)))

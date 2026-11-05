@@ -18,6 +18,9 @@ guard_audit.log
 # 교안 레퍼런스 코드 (public 저장소에 올리지 않음, 로컬 참고용)
 ref/
 
+# 라운드별 전체 평가 결과 (답변 전문·내부 메모·권한 명단 포함). 공개용 요약은 evaluation/eval_result.json
+evaluation/eval_result_round*.json
+
 # 실제 Excel에서 파생된 결과물 (원문 포함 가능)
 data/derived/
 reports/
