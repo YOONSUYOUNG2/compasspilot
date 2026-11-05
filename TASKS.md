@@ -56,5 +56,7 @@
   - 확인: unittest(연결 규칙·양식 파일 존재·이름 0건), 가짜 DOM 동작 시험(📎 클릭 → 내려받기), 스크린샷 확인
 - [x] **T23 문서 정리**(제출 전 검토 반영): 프로젝트 README 작성(교안 가이드는 `docs/dev-guide.md`로 이동), SERVICE.md를 현재 구현에 맞게 정리(원문 비교 문구, 데이터 표, 대시보드 전용 기능, 공유 정책, 범위 경계, 로드맵)
   - 확인: README의 명령어가 실제로 실행됨, CLAUDE.md·SERVICE.md 링크가 깨지지 않음, 공개 파일에 키·내부 메모 0건
+- [x] **T24 한눈 요약 분리**(사용자 검토 반영): ① Competency 준비 / ② 임직원 자격 두 블록으로 나누고, 자체 평가는 요약에서 뺀다
+  - 확인: 가짜 DOM 동작 시험, 스크린샷(밝은·다크) 확인, unittest
 - [ ] **T18 제출**: 최종 라운드 평가·보고서, `evaluation/unittest_log.txt`, `docs/architecture.md`(Mermaid), 대시보드 갱신, GitHub 저장소 생성 → 올릴 파일 목록 확인 → push, 패들릿 제출
   - 확인: 저장소에 `.env`·`data/private`·`ref` 없음, 최종 라운드 보고서가 SERVICE.md 기준(S4~S6, S11) 충족

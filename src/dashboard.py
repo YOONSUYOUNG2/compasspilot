@@ -170,9 +170,9 @@ PAGE = Template(r"""<!doctype html>
 :root{color-scheme:light;--bg:#f6f7f9;--card:#fcfcfb;--fg:#0b0b0b;--fg2:#52514e;--muted:#6b6a65;--line:#e1e0d9;--accent:#2a78d6;--track:#cde2fb;--chip:#eef2fb;
 --good:#0ca30c;--warning:#fab219;--serious:#ec835a;--critical:#d03b3b;--good-text:#006300;--bad-text:#b42318;--note:#8a5a00;
 --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#184f95;--chip:#26304a;
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;
 --good-text:#0ca30c;--bad-text:#ff7b70;--note:#e0b050;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#184f95;--chip:#26304a;
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;
 --good-text:#0ca30c;--bad-text:#ff7b70;--note:#e0b050;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif}
@@ -189,7 +189,12 @@ h2{font-size:16px;margin:0 0 12px}h3{font-size:14px;margin:18px 0 8px}h4{font-si
 .sum{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1.4fr);gap:16px}
 .card{border:1px solid var(--line);border-radius:8px;padding:12px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:12px;align-items:start}
-.sum .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sum .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.axis{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px}
+.axis-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.axis-h h3{margin:0;font-size:15px}.axis-h .muted{font-size:12px}
+.axis-no{font-weight:700;color:var(--accent)}
+.vrows{display:grid;grid-template-columns:max-content 1fr max-content;gap:10px 12px;align-items:center;font-size:13px}
 .list{font-size:12.5px}.dl{margin-bottom:3px}
 .tpl{font:inherit;font-size:11.5px;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:4px;padding:0 6px;margin-left:6px;cursor:pointer;white-space:nowrap}
 .tpl:hover,.tpl:focus-visible{border-color:var(--accent)}
@@ -233,7 +238,7 @@ details.sec[open]>summary{margin-bottom:12px}
 svg text{fill:var(--muted);font-size:11px}
 .tip{position:fixed;display:none;pointer-events:none;z-index:10;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:320px}
 footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
-@media (max-width:700px){.sum{grid-template-columns:1fr}.hero{font-size:44px}.sum .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.sum{grid-template-columns:1fr}.hero{font-size:44px}}
 @media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,.tpl,details.sec{display:none!important}
 section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 </style></head><body>
@@ -310,10 +315,10 @@ function meter(rate, label) {
   const m = el('div', {class: 'meter', role: 'img'}, el('div', {style: 'width:' + Math.round((rate || 0) * 100) + '%'}));
   return hover(m, label);
 }
-function statusChip(n, name, good) {
+function statusChip(n, name, good, unit) {
   const isOk = good ? n === 0 : true;
   return el('span', {class: 'status'}, el('span', {class: isOk ? 'ok' : 'bad', 'aria-hidden': 'true'}, isOk ? (good ? '✓' : 'ⓘ') : '⚠'),
-    name, el('b', {}, n + '건'));
+    name, el('b', {}, n + (unit || '건')));
 }
 function countBy(items, key) { const c = {}; for (const i of items) c[i[key]] = (c[i[key]] || 0) + 1; return c; }
 
@@ -330,7 +335,9 @@ function renderSummary() {
   const box = document.getElementById('summary'); box.replaceChildren(el('h2', {}, '한눈 요약'));
   const V = D.versions; if (!V.latest) { box.append(el('p', {class: 'muted'}, '데이터 없음')); return; }
   const v = V.versions[V.latest], df = ok(v.difficulty), dv = ok(v.deliverables), d = v.diff;
-  box.append(el('p', {class: 'rule'}, '기준: ' + V.latest + ' 판 (최신). 준비 상태는 가상 데이터입니다.'));
+  box.append(el('p', {class: 'rule'}, '파트너 등급을 정하는 두 축을 나눠 봅니다: ① 회사가 취득할 Competency ② 임직원 개인 자격.'));
+  // ── ① Competency 준비 ──
+  const comp = axisBlock('①', 'Competency 준비', 'AWS M&M · ' + V.latest + ' 판(최신) · 준비 상태는 가상 데이터');
   const left = el('div', {class: 'card'});
   if (df) {
     const rc = countBy(df.items, 'readiness'), r = rc['준비완료'] || 0, p = rc['일부'] || 0, n = rc['미준비'] || 0, all = r + p + n;
@@ -348,22 +355,47 @@ function renderSummary() {
     '추가 ' + d.added.length + ' · 변경 ' + d.changed.length + ' · 안내문 ' + d.sheet_notes.length));
   if (df) tiles.append(kpi(df.counts.high, '난이도 상', '3~4점 · 먼저 착수'));
   if (dv) tiles.append(kpi(dv.total, '준비할 산출물', '양식 연결 ' + (dv.linked || 0) + '개 · 고객 사례 항목 ' + dv.customer + '개'));
-  const T = D.certs && ok(D.certs.targets);
-  if (T) tiles.append(kpi(pct(T.total.rate), '자격 취득률', T.total.achieved + ' / ' + T.total.target + ' (연인원)'));
-  const E = D.eval;
-  if (E) tiles.append(kpi(E.summary.passed + '/' + E.summary.total, '자체 평가 통과', '라운드 ' + E.round));
-  box.append(el('div', {class: 'sum'}, left, el('div', {}, tiles)));
+  comp.append(el('div', {class: 'sum'}, left, el('div', {}, tiles)));
+  box.append(comp);
   if (df) {
     const byDel = Object.fromEntries((dv ? dv.items : []).map(i => [i.id, i]));
     const top = df.items.filter(i => i.readiness !== '준비완료').slice(0, 5);
     const go = el('button', {class: 'btn', type: 'button'}, '난이도 상 전체 보기');
     go.addEventListener('click', () => { STATE.tab = 'prep'; STATE.level = '상'; STATE.q = ''; STATE.scope = '';
       renderVersions(); const t = document.getElementById('ver'); if (t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); });
-    box.append(el('h3', {}, '우선 준비 항목 (점수 높은 순, 준비완료 제외)'),
+    comp.append(el('h4', {style: 'margin-top:16px'}, '우선 준비 항목 (점수 높은 순, 준비완료 제외)'),
       table(['난이도', '점수', 'ID', '제목', '준비 상태', '산출물'], top.map(i => [lvChip(i.level), String(i.score), i.id, i.title,
         i.readiness, byDel[i.id] ? byDel[i.id].deliverables.length + '개' : '-'])),
-      el('div', {class: 'row', style: 'margin-top:8px'}, go));
+      el('div', {class: 'row', style: 'margin:8px 0 0'}, go));
   }
+
+  // ── ② 임직원 자격 ──
+  const cert = axisBlock('②', '임직원 자격', '취득 대상 대비 실적 · 가상 데이터 · 숫자만(이름 없음)');
+  const T = D.certs && ok(D.certs.targets);
+  if (!T) { cert.append(el('p', {class: 'muted'}, '자격 대상 데이터 없음')); box.append(cert); return; }
+  const P = T.by_person;
+  const pparts = [{name: '전부 취득', value: P.all, color: C.ready, unit: '명'}, {name: '일부 취득', value: P.partial, color: C.partial, ink: DARK_INK, unit: '명'},
+    {name: '미취득 (0건)', value: P.none, color: C.none, unit: '명'}];
+  const cleft = el('div', {class: 'card'}, el('h4', {}, '자격 취득률 (연인원)'), el('div', {class: 'hero'}, pct(T.total.rate)),
+    el('div', {class: 'muted'}, '대상 ' + T.total.target + '건 중 취득 ' + T.total.achieved + '건 · 아래는 사람 기준(대상 인원 ' + P.people + '명)'),
+    segBar(pparts, '사람별 취득 현황'), legend(pparts));
+  const vrows = el('div', {class: 'vrows'});
+  for (const v of T.vendors) { const x = T.by_vendor[v];
+    vrows.append(el('span', {}, v), meter(x.rate, pct(x.rate) + ' · ' + v + ' 취득 ' + x.achieved + ' / 대상 ' + x.target),
+      el('span', {class: 'muted'}, pct(x.rate) + ' (' + x.achieved + '/' + x.target + ')')); }
+  const K = T.checks, errs = K.unknown_employee_ids + K.duplicate_rows;
+  const goCert = el('button', {class: 'btn', type: 'button'}, '자격 현황 자세히 보기');
+  goCert.addEventListener('click', () => { const t = document.getElementById('cert'); if (t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); });
+  const cright = el('div', {class: 'card'}, el('h4', {}, '벤더별 취득률'), vrows,
+    el('div', {style: 'margin-top:12px'}, statusChip(errs, '데이터 점검 오류', true), statusChip(P.none, '미취득 인원', true, '명')),
+    el('div', {class: 'row', style: 'margin:4px 0 0'}, goCert));
+  cert.append(el('div', {class: 'sum'}, cleft, cright));
+  box.append(cert);
+}
+
+function axisBlock(no, title, sub) {
+  return el('div', {class: 'axis'}, el('div', {class: 'axis-h'}, el('span', {class: 'axis-no'}, no), el('h3', {}, title),
+    el('span', {class: 'muted'}, sub)));
 }
 
 // ── ① Competency 버전 ──
