@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> 어떻게 만드는가. 무엇을·왜는 [SERVICE.md](SERVICE.md), 작업 순서는 [TASKS.md](TASKS.md), 개발 진행 방식은 [README.md](README.md)를 따른다.
+> 어떻게 만드는가. 무엇을·왜는 [SERVICE.md](SERVICE.md), 작업 순서는 [TASKS.md](TASKS.md), 개발 진행 방식은 [docs/dev-guide.md](docs/dev-guide.md)(교안 개발 가이드)를 따른다. 루트 [README.md](README.md)는 저장소 방문자용 프로젝트 소개다.
 
 ## 1. 작업 규칙
 
@@ -40,7 +40,8 @@
 
 ```
 mini-pjt/
-├─ README.md, SERVICE.md, CLAUDE.md, TASKS.md
+├─ README.md                 # 프로젝트 소개 (저장소 첫 화면)
+├─ SERVICE.md, CLAUDE.md, TASKS.md
 ├─ requirements.txt          # 버전 고정
 ├─ .env                      # git 제외 (.env.example만 커밋)
 ├─ src/
@@ -76,7 +77,8 @@ mini-pjt/
 │  └─ round<N>_report.md     # 라운드별 보고서 (git에 올림)
 ├─ tests/                    # unittest
 ├─ docs/
-│  └─ architecture.md        # 구조 다이어그램 (Mermaid)
+│  ├─ architecture.md        # 구조 다이어그램 (Mermaid)
+│  └─ dev-guide.md           # 교안 개발 가이드 (스펙 주도 개발 규칙, 원래 루트 README.md)
 ├─ data/
 │  ├─ private/versions/      # 실제 Assessment Excel, 버전별 (git 제외, 내용 수정 금지)
 │  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json, templates/ 산출물 양식 15종)

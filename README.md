@@ -1,77 +1,88 @@
-# mini-pjt 개발 가이드
+# CompassPilot · CSP 파트너 등급 관리 에이전트
 
-이 프로젝트는 아래 규칙과 흐름에 따라 개발합니다. (스펙 주도 개발)
+회사의 CSP 파트너 등급은 **회사가 취득한 Competency**와 **임직원 자격 보유 현황**, 이 두 축으로 정해집니다. CompassPilot은 두 축을 한곳에서 관리하는 사내 에이전트입니다. 첫 적용 대상은 AWS Migration and Modernization(M&M) Competency입니다.
 
-## 0. 세팅
+- **질문에 답하는 에이전트(CLI)**: Requirement 원문을 근거 ID와 함께 찾고, Assessment 버전 차이를 비교합니다. 준비 난이도와 필요 산출물을 알려 주고, 권한에 따라 임직원 자격 현황을 보여 줍니다.
+- **한 화면 대시보드(HTML 파일 1개)**: 한눈 요약, 버전 변경 내역, 준비 현황(난이도·산출물 체크리스트·양식 내려받기), 자격 취득 대상 대비 실적, 자체 평가 결과를 보여 줍니다.
 
-- VS Code에서 프로젝트 폴더를 열고 `git init`을 하여 초기 세팅합니다.
-- GitHub에 public으로 올리거나, 아니면 폴더 자체를 zip 파일로(Private) 제출합니다.
-- 기획서 `SERVICE.md`는 폴더 맨 위(루트)에 둡니다.
-- `.env` 파일은 git에 올라가지 않게끔 주의합니다.
-- (참고) 교안 day7 checkpoint 코드블록 또는 최종 코드 파일을 저장해 놓고, 구조를 레퍼런스 삼으라고 프롬프팅만 해줘도 이후 구조 잡는 데 편합니다.
-  (별도로 폴더로 만들어 놓고, 그 부분을 참고하라고 지칭해주면 됨)
+> 기획(무엇을·왜): [SERVICE.md](SERVICE.md) · 구현 규칙(어떻게): [CLAUDE.md](CLAUDE.md) · 작업 기록: [TASKS.md](TASKS.md) · 구조도: [docs/architecture.md](docs/architecture.md)
 
-## 1. CLAUDE.md 만들기 (AI가 매번 읽는 규칙)
+## 해결하는 문제
 
-Claude Code는 루트의 `CLAUDE.md`를 대화마다 자동으로 읽습니다.
-처음에 `/init`을 치면 초안을 만들어 주는데, 거기에 아래 내용을 참고하여 붙여주거나 맞춰서 수정합니다.
+| 문제 | CompassPilot |
+|---|---|
+| Assessment가 준비 중에도 개정된다(2025-08 판 47개 → 2026-08 판 55개). 무엇이 바뀌었는지 사람이 눈으로 비교한다 | 파이썬 규칙으로 추가·삭제·실질 변경·경미 변경(표기/오타)·시트 안내문 변경을 판정한다. 정답표와 100% 일치 |
+| 요구사항이 길고 많다(항목당 약 670자 영문) | 질문 한 줄로 근거 `[ID: POV-007]`가 붙은 답을 받는다. 영문 답변 아래에 한국어 번역이 붙는다 |
+| PM·개발자가 프로젝트 착수 전에 무엇을 준비해야 할지 모른다 | 난이도(상/중/하, 점수 근거 포함), 고객 사례 4건 기준 산출물 체크리스트, 산출물 양식 내려받기를 제공한다 |
+| 자격 집계는 수작업이고, 명단은 개인정보다 | 숫자 집계는 누구나 볼 수 있다. 명단은 사용자 권한(인사팀/사업부장/팀장/그룹장)에 맞는 범위만 보여 준다. 일반 권한 답변과 실행 기록에서는 이름을 가린다 |
 
-```markdown
-# 작업 규칙
-- 무엇을 만드는지는 SERVICE.md가 기준이다. 애매하면 추측하지 말고 물어본다.
-- 스택: Python, LangGraph, Bedrock (anthropic.claude-3-5-sonnet-20241022-v2:0)
-  -> 필요 시 모델은 조정해서 사용하거나 복수의 모델을 상황에 맞춰 변경하여 중단 없이 쓸 수 있게 한다.
-- 괜찮은 레퍼런스 코드를 깃허브에서 찾아서 레퍼런스로 삼거나 (있을 경우) 현재 ref 폴더 내 코드를 참조한다.
-  절대 사용자의 허락 없이 신규 프레임워크 또는 라이브러리를 들이지 않는다.
-- 한 번에 TASKS.md의 작업 하나만 한다.
-- 계산, 규칙 판정은 LLM이 아니라 파이썬 코드로 하는 원칙으로 진행한다. 필요시 LLM 판정 부분을 덧붙여 추가한다.
-- API 키는 .env에서 읽는다.
+## 구조
+
+```
+질문 → 입력 가드레일(정규식 + Haiku) → Supervisor(Sonnet 4.5)
+         ├─ assessment_agent  → search_requirements (Chroma RAG, Titan 임베딩)
+         ├─ competency_agent  → MCP 서버: diff_versions · assess_difficulty · list_deliverables
+         ├─ workforce_agent   → count_certifications · get_certification_details (권한은 user_id로만 판정)
+         └─ general_agent
+      → 후처리(파이썬 규칙): 최종 답 검증·근거 없는 내부 메모 삭제·이름 마스킹·보고서 저장
+      → 모든 단계 trace.jsonl 기록(이름 마스킹)
 ```
 
-## 2. 스펙을 작업 목록으로 쪼개기 (Plan 모드)
+- **계산·비교·권한 판정은 파이썬**이 하고, LLM은 질의 해석·답변 작성·번역·산출물 추출에만 씁니다.
+- 자세한 그림은 [docs/architecture.md](docs/architecture.md)에 있습니다. LangGraph `get_graph().draw_mermaid()`로 그렸습니다.
 
-입력창 아래 모드 선택에서 Plan 모드로 바꾸면 AI가 코드는 건드리지 않고 계획만 세우게 되며, 요청은 이렇게 해 보면 좋습니다.
+## 실행 방법
 
-> @SERVICE.md 를 읽고 구현 순서를 TASKS.md로 쪼개서 프로젝트 루트 폴더에 저장해줘.
-> 작업 하나는 30분~1시간 크기로 하고 각 작업마다 "다 됐는지 확인하는 방법"을 한 줄씩 붙여줘.
-> 첫 묶음은 입력부터 최종 답변까지 한 경로만 돌아가는 최소 버전으로 잡아줘. 코드는 아직 쓰지 마.
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env        # AWS 액세스 키 입력 (Bedrock: Sonnet 4.5, Haiku 4.5, Titan Embeddings v2)
+```
 
-나온 `TASKS.md`는 사용자가 먼저 읽어보고, 문제가 있다고 하면 여기서 바로 수정합니다.
-스펙 주도라는 게 이 단계가 정말 중요합니다. 추후에 코드를 고치는 것보다 문서를 고치는 게 훨씬 품이 덜 들기 때문입니다.
+| 하는 일 | 명령 |
+|---|---|
+| Assessment 파싱·색인·산출물 추출 (Excel을 `data/private/versions/`에 넣은 뒤) | `python -m src.rag.index` |
+| 질문 (일반 권한) | `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` |
+| 질문 (권한 지정) | `python -m src.main --user hr01 "임직원 이름이랑 자격증 목록 전부 보여줘"` |
+| 보고서 저장 (`reports/날짜_주제_en.md`, `_ko.md`) | `python -m src.main "고객 사례 4건 준비용 산출물 체크리스트를 보고서로 만들어줘"` |
+| 대시보드 생성 → `reports/dashboard.html` | `python -m src.dashboard` |
+| 단위 테스트 | `python -m unittest discover -s tests -v` |
+| 평가 라운드 N | `python -m evaluation.run_eval --round N` |
 
-## 3. 한 작업씩 반복
+- 가상 사용자는 `hr01`(인사팀), `divA`·`divB`(사업부장), `tlA1`·`tlB1`(팀장), `glA11`·`glA12`(그룹장), `staff01`(일반)입니다. `data/sample/org_users.json`에 있습니다.
+- **실제 Assessment Excel은 저장소에 없습니다**(`data/private/`, git 제외). 그래서 다른 환경에서는 색인·질문·대시보드를 실행할 수 없고, Excel이 필요한 테스트는 건너뜁니다. 로컬 실행 기록은 [evaluation/unittest_log.txt](evaluation/unittest_log.txt)에 남겼습니다.
 
-`TASKS.md` 작업마다 아래 내용을 반복합니다.
+## 평가 결과
 
-1. **계획 확인**: Plan 모드에서 "TASKS.md 2번 작업 계획 보여줘"라고 하고 어떤 파일을 고치는지 봅니다.
-2. **구현**: 계획이 괜찮으면 Auto 또는 edit automatically 모드로 돌려서 진행시킵니다. 파일을 고칠 때마다 diff가 뜨니 대충이라도 훑어보고 승인합니다.
-3. **직접 실행**: AI가 "완료했습니다"라고 해도 한번 실행해 봅니다. 어려우면 실행하고 결과를 Claude에게 달라고 해봅니다. `TASKS.md`에 적어 둔 내용과 동일하게 동작하는지 체크합니다.
-4. **커밋**: 필요 시 커밋하고 (git도 Claude에게 요청하면 됨) `TASKS.md`에 체크 표시를 하거나 해달라고 요청합니다.
-5. **컨텍스트 초기화**: 다음 작업으로 넘어가기 전에 `/clear` 또는 새 대화 세션으로 대화를 시작합니다. 어차피 `CLAUDE.md`, `SERVICE.md`, `TASKS.md`에 다 적혀 있으니 크게 문제가 안 됩니다.
+평가셋은 32문항입니다(검색·버전 비교·도구·멀티 에이전트·가드레일·권한). 규칙 판정과 함께 LLM judge(Sonnet 4.5, 1~5점)와 RAGAS 지표(라이브러리 없이 같은 정의로 계산)를 씁니다. 평가 → 원인 분석 → 개선을 12라운드 반복했습니다.
 
-최대한 "전체 다 만들어줘" 한 방은 피하는 게 좋습니다. 한꺼번에 만들어 놓으면 어디가 틀렸는지 찾을 수가 없습니다.
+| 최종 라운드 12 | 결과 |
+|---|---|
+| 규칙 판정 | **32/32** |
+| LLM judge 평균 | **4.89 / 5** |
+| faithfulness · answer relevancy · context precision · context recall | 0.981 · 0.768 · 0.887 · 0.991 |
+| 성공 기준 S3(검색 출처 9/9) · S4(기능 22/22) · S5(안전 10/10) · S6(지어낸 답 0) · S11(faithfulness ≥ 0.8) | 모두 충족 |
+| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드 등) | 123개 통과 |
 
-## 4. 테스트부터 만들어 두기 (필요 시)
+- 라운드별 실패 원인과 개선 내용은 `evaluation/round0_report.md` ~ [round12_report.md](evaluation/round12_report.md)에 있습니다.
+- 개선 사례: 평가 측정 오류 수정, Supervisor가 맞는 답을 망가뜨리는 문제를 코드 검증으로 차단, 동시 실행 충돌 수정, LLM이 개수를 잘못 세는 문제를 파이썬 집계로 대체.
+- 공개용 결과 요약: [evaluation/eval_result.json](evaluation/eval_result.json). 답변 전문·검색 원문은 내부 메모가 섞일 수 있어 빼고 올렸습니다.
 
-기획서 5절에 평가셋이나 성공 기준을 써 두었다면, 기능을 늘리기 전에 그걸 돌려 볼 수 있는 테스트로 먼저 바꿔봅니다.
+## 데이터와 공개 범위
 
-> SERVICE.md 5절 평가 케이스를 tests/ 아래 pytest로 만들어줘. 아직 구현 안 된 건 실패해도 괜찮아.
+| 데이터 | 저장소 |
+|---|---|
+| AWS M&M Assessment Excel (2025-08 판, 2026-08 판, 담당자 내부 메모 포함) | 올리지 않음 (`data/private/`) |
+| 파싱·색인·산출물 추출 결과, 대시보드·보고서, trace | 올리지 않음 (재생성 가능) |
+| 조직·임직원 자격·자격 취득 대상·준비 상태·산출물 양식 | **가상 데이터**만 올림 (`data/sample/`, 실제 임직원과 무관) |
 
-그 뒤로는 "테스트 통과할 때까지 고쳐줘"라고만 해도 됩니다.
-단순하게 "테스트 코드를 짜줘" 또는 "코드 잘 동작되게 해줘"라고 할 때보다 괜찮게 작성됩니다.
+대시보드에는 Assessment 원문과 내부 메모가 들어가므로 사내 전용입니다. 자격 현황은 숫자만 넣고 이름은 넣지 않습니다.
 
-## 5. 막혔을 때
+## 스택
 
-에러는 읽어도 괜찮지만, 우선 전문을 그대로 붙이고 **고치기 전에 원인부터 말하게** 합니다. (코드 수정 X)
+Python 3.14 · LangGraph · langgraph-supervisor · LangChain AWS(Bedrock) · Chroma · FastMCP · unittest. 버전은 [requirements.txt](requirements.txt)에 고정했습니다. 대시보드는 파이썬 기본 라이브러리만 쓰고, 외부 CSS·JS 없이 인터넷 없이 열립니다.
 
-> 이 에러 원인부터 설명해줘. 고치기 전에 어느 파일을 어떻게 바꿀지 먼저 보여줘.
+## 개발 방식
 
-- 같은 에러로 두세 번 돌면서 제대로 못 고치면, 그 대화는 버리고 마지막 커밋으로 되돌린 뒤 `/clear` 또는 새 대화창을 열어 다시 진행합니다.
-- 에러 수정 중에 AI가 처음 보는 패키지나 함수 이름을 쓴다면, 항상 사용자 확인 후 진행하도록 가이드합니다.
-
-## 6. 기획이 바뀌면 문서부터 정리하기
-
-하다 보면 "이건 빼자" 또는 "이렇게 바꾸자" 하는 게 생깁니다.
-그럴 땐 코드보다 `SERVICE.md`와 `TASKS.md`를 먼저 고치고 "바뀐 SERVICE.md 기준으로 맞춰줘"라고 시키는 편이 낫습니다.
-
-코드를 먼저 수정하고 문서를 나중에 수정해도 문제는 없지만, 이 시점에 문서 업데이트를 잠시라도 놓치면 문서와 코드가 따로 놀게 되고, 다음 대화에서 AI가 이전 버전 문서를 기준으로 동작해버릴 수 있습니다.
+교안의 스펙 주도 개발 가이드([docs/dev-guide.md](docs/dev-guide.md))를 따랐습니다. SERVICE.md(기획)에서 CLAUDE.md(규칙)와 TASKS.md(작업 목록)로 내려가고, 작업 하나마다 계획 → 구현 → 실행 확인 → 커밋 순서로 진행했습니다.
