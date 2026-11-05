@@ -1,0 +1,47 @@
+employee_id,name,division,team,group,vendor,certification
+E001,정하늘,A사업부,A1팀,A1-1그룹,AWS,Solutions Architect - Professional
+E001,정하늘,A사업부,A1팀,A1-1그룹,Google Cloud,Professional Cloud Architect
+E002,정서준,A사업부,A1팀,A1-2그룹,AWS,Solutions Architect - Associate
+E002,정서준,A사업부,A1팀,A1-2그룹,Google Cloud,Professional Data Engineer
+E003,홍지우,A사업부,A2팀,A2-1그룹,AWS,Machine Learning - Specialty
+E003,홍지우,A사업부,A2팀,A2-1그룹,AWS,Security - Specialty
+E004,최민준,B사업부,B1팀,B1-1그룹,AWS,DevOps Engineer - Professional
+E004,최민준,B사업부,B1팀,B1-1그룹,AWS,Machine Learning - Specialty
+E004,최민준,B사업부,B1팀,B1-1그룹,AWS,Solutions Architect - Associate
+E005,신서연,B사업부,B1팀,B1-2그룹,AWS,Solutions Architect - Associate
+E005,신서연,B사업부,B1팀,B1-2그룹,AWS,Solutions Architect - Professional
+E006,홍도윤,B사업부,B2팀,B2-1그룹,AWS,Solutions Architect - Associate
+E007,강하은,A사업부,A1팀,A1-1그룹,AWS,DevOps Engineer - Professional
+E007,강하은,A사업부,A1팀,A1-1그룹,OpenAI,API Developer (가상)
+E009,임지아,A사업부,A2팀,A2-1그룹,AWS,Security - Specialty
+E009,임지아,A사업부,A2팀,A2-1그룹,AWS,Solutions Architect - Associate
+E009,임지아,A사업부,A2팀,A2-1그룹,AWS,Solutions Architect - Professional
+E010,강시우,B사업부,B1팀,B1-1그룹,AWS,DevOps Engineer - Professional
+E010,강시우,B사업부,B1팀,B1-1그룹,AWS,Solutions Architect - Professional
+E011,권수아,B사업부,B1팀,B1-2그룹,AWS,DevOps Engineer - Professional
+E012,홍주원,B사업부,B2팀,B2-1그룹,AWS,Security - Specialty
+E012,홍주원,B사업부,B2팀,B2-1그룹,AWS,Solutions Architect - Professional
+E012,홍주원,B사업부,B2팀,B2-1그룹,Google Cloud,Professional Data Engineer
+E013,한유나,A사업부,A1팀,A1-1그룹,AWS,Solutions Architect - Professional
+E014,강건우,A사업부,A1팀,A1-2그룹,AWS,Machine Learning - Specialty
+E014,강건우,A사업부,A1팀,A1-2그룹,AWS,Security - Specialty
+E014,강건우,A사업부,A1팀,A1-2그룹,AWS,Solutions Architect - Professional
+E015,강채원,A사업부,A2팀,A2-1그룹,AWS,Machine Learning - Specialty
+E015,강채원,A사업부,A2팀,A2-1그룹,AWS,Solutions Architect - Professional
+E017,임다은,B사업부,B1팀,B1-2그룹,AWS,Solutions Architect - Associate
+E017,임다은,B사업부,B1팀,B1-2그룹,AWS,Solutions Architect - Professional
+E019,한소율,A사업부,A1팀,A1-1그룹,AWS,DevOps Engineer - Professional
+E019,한소율,A사업부,A1팀,A1-1그룹,AWS,Solutions Architect - Professional
+E020,이우진,A사업부,A1팀,A1-2그룹,AWS,Solutions Architect - Associate
+E022,박선우,B사업부,B1팀,B1-1그룹,AWS,Machine Learning - Specialty
+E025,강서윤,A사업부,A1팀,A1-1그룹,AWS,DevOps Engineer - Professional
+E025,강서윤,A사업부,A1팀,A1-1그룹,AWS,Solutions Architect - Associate
+E026,황은호,A사업부,A1팀,A1-2그룹,AWS,DevOps Engineer - Professional
+E026,황은호,A사업부,A1팀,A1-2그룹,AWS,Security - Specialty
+E028,송지호,B사업부,B1팀,B1-1그룹,AWS,DevOps Engineer - Professional
+E028,송지호,B사업부,B1팀,B1-1그룹,AWS,Security - Specialty
+E028,송지호,B사업부,B1팀,B1-1그룹,AWS,Solutions Architect - Professional
+E029,서하린,B사업부,B1팀,B1-2그룹,AWS,Machine Learning - Specialty
+E029,서하린,B사업부,B1팀,B1-2그룹,AWS,Solutions Architect - Associate
+E030,최태윤,B사업부,B2팀,B2-1그룹,AWS,Machine Learning - Specialty
+E030,최태윤,B사업부,B2팀,B2-1그룹,Google Cloud,Professional Cloud Architect

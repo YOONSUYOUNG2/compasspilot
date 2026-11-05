@@ -1,0 +1,301 @@
+{
+  "_comment": "가상 데이터. 실제 임직원과 무관하다.",
+  "organization": {
+    "A사업부": {
+      "A1팀": [
+        "A1-1그룹",
+        "A1-2그룹"
+      ],
+      "A2팀": [
+        "A2-1그룹"
+      ]
+    },
+    "B사업부": {
+      "B1팀": [
+        "B1-1그룹",
+        "B1-2그룹"
+      ],
+      "B2팀": [
+        "B2-1그룹"
+      ]
+    }
+  },
+  "users": [
+    {
+      "user_id": "hr01",
+      "role": "hr",
+      "division": null,
+      "team": null,
+      "group": null,
+      "note": "인사팀"
+    },
+    {
+      "user_id": "divA",
+      "role": "division_head",
+      "division": "A사업부",
+      "team": null,
+      "group": null,
+      "note": "담당"
+    },
+    {
+      "user_id": "divB",
+      "role": "division_head",
+      "division": "B사업부",
+      "team": null,
+      "group": null,
+      "note": "담당"
+    },
+    {
+      "user_id": "tlA1",
+      "role": "team_leader",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": null,
+      "note": "팀장"
+    },
+    {
+      "user_id": "tlB1",
+      "role": "team_leader",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": null,
+      "note": "팀장"
+    },
+    {
+      "user_id": "glA11",
+      "role": "group_leader",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹",
+      "note": "그룹장"
+    },
+    {
+      "user_id": "glA12",
+      "role": "group_leader",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹",
+      "note": "그룹장"
+    },
+    {
+      "user_id": "staff01",
+      "role": "staff",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹",
+      "note": "일반"
+    }
+  ],
+  "employees": [
+    {
+      "employee_id": "E001",
+      "name": "정하늘",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹"
+    },
+    {
+      "employee_id": "E002",
+      "name": "정서준",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹"
+    },
+    {
+      "employee_id": "E003",
+      "name": "홍지우",
+      "division": "A사업부",
+      "team": "A2팀",
+      "group": "A2-1그룹"
+    },
+    {
+      "employee_id": "E004",
+      "name": "최민준",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-1그룹"
+    },
+    {
+      "employee_id": "E005",
+      "name": "신서연",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-2그룹"
+    },
+    {
+      "employee_id": "E006",
+      "name": "홍도윤",
+      "division": "B사업부",
+      "team": "B2팀",
+      "group": "B2-1그룹"
+    },
+    {
+      "employee_id": "E007",
+      "name": "강하은",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹"
+    },
+    {
+      "employee_id": "E008",
+      "name": "신예준",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹"
+    },
+    {
+      "employee_id": "E009",
+      "name": "임지아",
+      "division": "A사업부",
+      "team": "A2팀",
+      "group": "A2-1그룹"
+    },
+    {
+      "employee_id": "E010",
+      "name": "강시우",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-1그룹"
+    },
+    {
+      "employee_id": "E011",
+      "name": "권수아",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-2그룹"
+    },
+    {
+      "employee_id": "E012",
+      "name": "홍주원",
+      "division": "B사업부",
+      "team": "B2팀",
+      "group": "B2-1그룹"
+    },
+    {
+      "employee_id": "E013",
+      "name": "한유나",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹"
+    },
+    {
+      "employee_id": "E014",
+      "name": "강건우",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹"
+    },
+    {
+      "employee_id": "E015",
+      "name": "강채원",
+      "division": "A사업부",
+      "team": "A2팀",
+      "group": "A2-1그룹"
+    },
+    {
+      "employee_id": "E016",
+      "name": "김현우",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-1그룹"
+    },
+    {
+      "employee_id": "E017",
+      "name": "임다은",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-2그룹"
+    },
+    {
+      "employee_id": "E018",
+      "name": "장준서",
+      "division": "B사업부",
+      "team": "B2팀",
+      "group": "B2-1그룹"
+    },
+    {
+      "employee_id": "E019",
+      "name": "한소율",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹"
+    },
+    {
+      "employee_id": "E020",
+      "name": "이우진",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹"
+    },
+    {
+      "employee_id": "E021",
+      "name": "황지민",
+      "division": "A사업부",
+      "team": "A2팀",
+      "group": "A2-1그룹"
+    },
+    {
+      "employee_id": "E022",
+      "name": "박선우",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-1그룹"
+    },
+    {
+      "employee_id": "E023",
+      "name": "황예린",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-2그룹"
+    },
+    {
+      "employee_id": "E024",
+      "name": "류연우",
+      "division": "B사업부",
+      "team": "B2팀",
+      "group": "B2-1그룹"
+    },
+    {
+      "employee_id": "E025",
+      "name": "강서윤",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-1그룹"
+    },
+    {
+      "employee_id": "E026",
+      "name": "황은호",
+      "division": "A사업부",
+      "team": "A1팀",
+      "group": "A1-2그룹"
+    },
+    {
+      "employee_id": "E027",
+      "name": "강나윤",
+      "division": "A사업부",
+      "team": "A2팀",
+      "group": "A2-1그룹"
+    },
+    {
+      "employee_id": "E028",
+      "name": "송지호",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-1그룹"
+    },
+    {
+      "employee_id": "E029",
+      "name": "서하린",
+      "division": "B사업부",
+      "team": "B1팀",
+      "group": "B1-2그룹"
+    },
+    {
+      "employee_id": "E030",
+      "name": "최태윤",
+      "division": "B사업부",
+      "team": "B2팀",
+      "group": "B2-1그룹"
+    }
+  ]
+}
