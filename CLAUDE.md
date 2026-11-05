@@ -51,7 +51,8 @@ mini-pjt/
 │  │  ├─ diff.py             # 버전 비교
 │  │  ├─ readiness.py        # 준비 상태 로드·환산
 │  │  ├─ difficulty.py       # 난이도 점수
-│  │  └─ deliverables.py     # 산출물 사전 추출(LLM)·조회
+│  │  ├─ deliverables.py     # 산출물 사전 추출(LLM)·조회
+│  │  └─ templates.py        # 산출물 ↔ 양식 연결(파이썬 규칙)·대시보드 내장용 인코딩
 │  ├─ rag/
 │  │  ├─ index.py            # Chroma 색인 생성
 │  │  └─ search.py           # search_requirements 도구
@@ -78,7 +79,7 @@ mini-pjt/
 │  └─ architecture.md        # 구조 다이어그램 (Mermaid)
 ├─ data/
 │  ├─ private/versions/      # 실제 Assessment Excel, 버전별 (git 제외, 내용 수정 금지)
-│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json)
+│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json, templates/ 산출물 양식 15종)
 │  └─ derived/               # 버전별 파싱 결과(requirements_<버전>.json)·산출물 추출 결과 (git 제외, 재생성 가능)
 ├─ reports/                  # 생성된 보고서·dashboard.html (git 제외)
 └─ ref/                      # 교안 레퍼런스 (git 제외, 수정 금지)

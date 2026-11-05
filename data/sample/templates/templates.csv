@@ -1,0 +1,16 @@
+template_id,file,title,keywords,requirement_ids
+company_overview,company_overview_outline.md,회사 소개 발표 자료 목차,company overview presentation,POV-001
+sow,sow_project_plan.md,SOW·프로젝트 계획서,sow;statements of work;project plan;project templates;project deliverable templates,PRJ-001;PRJ-002;PRJ-003;CSN-001;CSN-002;DES-001
+architecture,architecture_diagram_guide.md,아키텍처 다이어그램 작성 가이드,architecture diagram;multi-account structure diagrams;vpc and networking connectivity diagrams,PS-001;DOC-001;MOB-004
+tech_solution,technical_solution.md,기술 솔루션 설명서,technical solution description;service and region justification;integration points;solution optimality;alternatives description;solution documentation;advanced service features,PS-001;PS-002;PS-005
+raci,raci_matrix.csv,RACI 매트릭스,raci,MOB-003
+runbook,runbook_sop.md,런북·SOP,runbook;sop,MOB-005;OPE-002;ACCT-001;ACCT-002
+cutover,cutover_rollback_plan.md,커뮤니케이션·컷오버·롤백 계획,communication plan;cutover plan;rollback,MOB-002
+wave_plan,wave_plan.csv,마이그레이션 웨이브 계획,wave;work breakdown structure;sprint plan,MOB-007;MM-001
+cost,cost_analysis.csv,비용 분석(TCO),cost analysis;pricing calculator;cost assessment;cost visibility,COST-001;DES-001;PRJ-006
+kpi,kpi_report.csv,KPI 성과 보고서,kpi,CO-001;OPE-001
+lessons,lessons_learned.md,교훈(Lessons learned),lessons learned,MOB-007;CO-002
+assessment,readiness_assessment.md,이관 준비도 평가·갭 분석 보고서,readiness assessment;assessment report;gap analysis,ASP-001;ASP-003
+customer_case,customer_case_background.md,고객 사례 배경 설명서,customer background;business challenge;goals and objectives;reference fit;category specification,UCR-001;UCR-002;UCR-003;UCR-004
+test_plan,test_deployment_checklist.md,테스트 방법론·배포 체크리스트,testing methodology;deployment checklist,PRJ-007;OPE-003
+ai_usage,ai_usage_inventory.csv,AI 활용 사례 목록,use case inventory;ai usage documentation,POV-007;DES-002

@@ -18,6 +18,7 @@ from string import Template
 from src import config
 from src.assessment import deliverables, diff, difficulty, parser
 from src.assessment.readiness import LABEL_KO
+from src.assessment.templates import embedded, load_templates, match
 
 OUT_PATH = config.REPORTS_DIR / "dashboard.html"
 
@@ -92,9 +93,12 @@ def deliverables_data(label: str) -> dict:
             return "회사 차원 (1회)"
         return "고객 사례 4건 모두" if n >= deliverables.CASES_TOTAL else f"고객 사례 4건 중 {n}건 이상"
 
+    tpls = load_templates()  # 산출물 양식 연결(파이썬 규칙). 양식이 없으면 연결 없이 표시한다
     items = [{"id": i["id"], "title": i["title"], "cases": cases(i["customer_examples_required"]),
-              "deliverables": [d["name"] for d in i["deliverables"]]} for i in r["items"]]
+              "deliverables": [d["name"] for d in i["deliverables"]],
+              "templates": [match(i["id"], d["name"], tpls) for d in i["deliverables"]]} for i in r["items"]]
     return {"total": sum(len(i["deliverables"]) for i in items),
+            "linked": sum(1 for i in items for t in i["templates"] if t),
             "company": sum(1 for i in r["items"] if not i["customer_examples_required"]),
             "customer": sum(1 for i in r["items"] if i["customer_examples_required"]),
             "items": items}
@@ -154,7 +158,7 @@ def evaluation_data() -> dict | None:
 
 def build_data() -> dict:
     return {"versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
-            "not_implemented": []}
+            "templates": embedded(load_templates()), "not_implemented": []}
 
 
 # ── HTML ──────────────────────────────────────────────────────────────────
@@ -186,7 +190,11 @@ h2{font-size:16px;margin:0 0 12px}h3{font-size:14px;margin:18px 0 8px}h4{font-si
 .card{border:1px solid var(--line);border-radius:8px;padding:12px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:12px;align-items:start}
 .sum .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-.list{white-space:pre-line;font-size:12.5px}.why{display:block;min-width:130px;white-space:pre-line;font-size:12px;color:var(--fg2)}
+.list{font-size:12.5px}.dl{margin-bottom:3px}
+.tpl{font:inherit;font-size:11.5px;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:4px;padding:0 6px;margin-left:6px;cursor:pointer;white-space:nowrap}
+.tpl:hover,.tpl:focus-visible{border-color:var(--accent)}
+.tplgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 12px}
+.tplitem{display:flex;flex-direction:column;align-items:flex-start;gap:2px}.tplitem .tpl{margin-left:0;font-size:12.5px;padding:2px 8px}.why{display:block;min-width:130px;white-space:pre-line;font-size:12px;color:var(--fg2)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:600;white-space:nowrap}
@@ -226,7 +234,7 @@ svg text{fill:var(--muted);font-size:11px}
 .tip{position:fixed;display:none;pointer-events:none;z-index:10;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:320px}
 footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
 @media (max-width:700px){.sum{grid-template-columns:1fr}.hero{font-size:44px}.sum .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,details.sec{display:none!important}
+@media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,.tpl,details.sec{display:none!important}
 section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 </style></head><body>
 <header><div class="hrow"><div><h1>CompassPilot · CSP 파트너 등급 관리 대시보드</h1>
@@ -339,7 +347,7 @@ function renderSummary() {
   if (d) tiles.append(kpi(d.added.length + d.removed.length + d.changed.length + d.sheet_notes.length, '이번 버전 변경',
     '추가 ' + d.added.length + ' · 변경 ' + d.changed.length + ' · 안내문 ' + d.sheet_notes.length));
   if (df) tiles.append(kpi(df.counts.high, '난이도 상', '3~4점 · 먼저 착수'));
-  if (dv) tiles.append(kpi(dv.total, '준비할 산출물', '고객 사례 항목 ' + dv.customer + '개'));
+  if (dv) tiles.append(kpi(dv.total, '준비할 산출물', '양식 연결 ' + (dv.linked || 0) + '개 · 고객 사례 항목 ' + dv.customer + '개'));
   const T = D.certs && ok(D.certs.targets);
   if (T) tiles.append(kpi(pct(T.total.rate), '자격 취득률', T.total.achieved + ' / ' + T.total.target + ' (연인원)'));
   const E = D.eval;
@@ -452,17 +460,34 @@ function drawChanges(pane, v, label) {
 
 function csvCell(x) { const s = String(x == null ? '' : x); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function prepCsv(rows) {  // 엑셀에서 한글이 깨지지 않게 BOM을 붙인다
-  const head = ['난이도', '점수', 'ID', '제목', '범위', '준비 상태', '준비 범위', '산출물', '점수 근거'];
+  const head = ['난이도', '점수', 'ID', '제목', '범위', '준비 상태', '준비 범위', '산출물', '양식', '점수 근거'];
+  const tplNames = x => x && x.templates ? [...new Set(x.templates.filter(t => t && TPL[t]).map(t => TPL[t].title))].join(' / ') : '';
   const body = rows.map(r => [r.d ? r.d.level : '', r.d ? r.d.score : '', r.id, r.title, r.scope, r.d ? r.d.readiness : '',
-    r.x ? r.x.cases : '', r.x ? r.x.deliverables.join(' / ') : '', r.d ? r.d.reasons.join(' / ') : '']);
+    r.x ? r.x.cases : '', r.x ? r.x.deliverables.join(' / ') : '', tplNames(r.x), r.d ? r.d.reasons.join(' / ') : '']);
   return '﻿' + [head, ...body].map(a => a.map(csvCell).join(',')).join('\r\n');
 }
-function download(name, text) {
+function download(name, data, mime) {
   try {
-    const url = URL.createObjectURL(new Blob([text], {type: 'text/csv;charset=utf-8'}));
+    const url = URL.createObjectURL(new Blob([data], {type: mime || 'text/csv;charset=utf-8'}));
     const a = el('a', {href: url, download: name}); document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (e) { alert('내보내기에 실패했습니다: ' + e); }
+}
+
+// ── 산출물 양식: HTML 안에 넣은 파일(base64)을 눌러서 내려받는다 ──
+const TPL = D.templates || {};
+function b64bytes(b64) { const s = atob(b64); const a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+function tplButton(id, label) {
+  const t = TPL[id]; if (!t) return '';
+  const b = el('button', {class: 'tpl', type: 'button', title: t.title + ' 양식 내려받기 (' + t.file + ')',
+    'aria-label': t.title + ' 양식 내려받기'}, label || '📎 양식');
+  b.addEventListener('click', () => download(t.file, b64bytes(t.b64), t.mime));
+  return b;
+}
+function delivCell(x) {
+  if (!x) return '-';
+  return el('div', {class: 'list'}, ...x.deliverables.map((n, i) =>
+    el('div', {class: 'dl'}, '☐ ' + n, x.templates && x.templates[i] ? tplButton(x.templates[i]) : '')));
 }
 
 function drawPrep(pane, v, df, dv, label) {
@@ -491,6 +516,16 @@ function drawPrep(pane, v, df, dv, label) {
         el('span', {class: 'muted'}, a.r + ' / ' + (a.r + a.p + a.n))]))));
   }
   pane.append(charts);
+  const tids = Object.keys(TPL);
+  if (tids.length) {
+    const used = {};
+    for (const r of rowsAll) if (r.x && r.x.templates) for (const t of r.x.templates) if (t) used[t] = (used[t] || 0) + 1;
+    pane.append(el('div', {class: 'card', style: 'margin-bottom:12px'},
+      el('h4', {}, '산출물 양식 모음 (' + tids.length + '종' + (dv ? ' · 산출물 ' + dv.total + '개 중 ' + dv.linked + '개 연결' : '') + ')'),
+      el('p', {class: 'rule'}, '가상 양식(Markdown·CSV)입니다. 📎를 누르면 내려받습니다. 아래 체크리스트에서도 산출물 옆 📎로 받을 수 있습니다. 실제 사내 양식은 파일만 바꿔 넣으면 됩니다.'),
+      el('div', {class: 'tplgrid'}, ...tids.map(id => el('div', {class: 'tplitem'}, tplButton(id, '📎 ' + TPL[id].title),
+        el('small', {class: 'muted'}, TPL[id].file + ' · 산출물 ' + (used[id] || 0) + '개'))))));
+  }
   pane.append(el('p', {class: 'rule'}, '준비 상태는 data/sample/readiness.csv(가상 데이터), 산출물은 색인할 때 원문에서 한 번 추출한 결과(근거 문장 원문 대조)입니다. ▸를 누르면 AWS 원문이 펼쳐집니다.'));
   if (!df) pane.append(el('p', {class: 'muted'}, '난이도 데이터 없음' + (v.difficulty && v.difficulty.error ? ' (' + v.difficulty.error + ')' : '')));
   if (!dv) pane.append(el('p', {class: 'muted'}, '산출물 데이터 없음' + (v.deliverables && v.deliverables.error ? ' (' + v.deliverables.error + ')' : '')));
@@ -508,7 +543,7 @@ function drawPrep(pane, v, df, dv, label) {
     holder.replaceChildren(expTable(['난이도', '점수', 'ID', '제목', '준비 상태', '준비 범위', '산출물 체크리스트', '점수 근거'], current.map(r => ({req: r, cells: [
       r.d ? lvChip(r.d.level) : '-', r.d ? String(r.d.score) : '-', r.id, r.title,
       r.d ? r.d.readiness : '-', r.x ? r.x.cases : '-',
-      el('span', {class: 'list'}, r.x ? r.x.deliverables.map(n => '☐ ' + n).join('\n') : '-'),
+      delivCell(r.x),
       el('span', {class: 'why'}, r.d ? r.d.reasons.join('\n') : '-')]}))));
   };
   redraw();

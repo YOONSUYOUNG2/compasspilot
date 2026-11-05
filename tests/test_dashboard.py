@@ -70,6 +70,13 @@ class TestDashboard(unittest.TestCase):
         for token in ('id="summary"', "prepCsv", "window.print()", "createElementNS"):
             self.assertIn(token, self.html)
 
+    def test_templates_linked(self):  # 산출물 양식: 102개 중 49개 연결, MOB-004 다이어그램 2개
+        dv = self.data["versions"]["versions"]["2026-08"]["deliverables"]
+        self.assertEqual((dv["total"], dv["linked"]), (102, 49))
+        mob = next(i for i in dv["items"] if i["id"] == "MOB-004")
+        self.assertEqual(mob["templates"], ["architecture", "architecture", None])
+        self.assertEqual(len(self.data["templates"]), 15)
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 
