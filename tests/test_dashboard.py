@@ -59,6 +59,17 @@ class TestDashboard(unittest.TestCase):
         self.assertEqual(t["by_person"]["people"], 28)
         self.assertEqual(t["checks"]["duplicate_rows"], 1)
 
+    def test_original_text_and_short_reasons(self):  # B3 원문 펼치기, 점수 근거 한국어 표기
+        v = self.data["versions"]["versions"]["2026-08"]
+        mob = next(r for r in v["requirements"] if r["id"] == "MOB-004")
+        self.assertTrue(mob["text"].startswith("Landing Zone"))
+        pov7 = next(i for i in v["difficulty"]["items"] if i["id"] == "POV-007")
+        self.assertEqual(pov7["reasons"], ["미준비 +2", "이번 버전 신규 +1"])
+
+    def test_summary_csv_print_present(self):  # B1 한눈 요약, B5 CSV·인쇄
+        for token in ('id="summary"', "prepCsv", "window.print()", "createElementNS"):
+            self.assertIn(token, self.html)
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 
