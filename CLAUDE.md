@@ -68,7 +68,8 @@ mini-pjt/
 │  ├─ agents.py              # build_app(): Supervisor + 하위 에이전트
 │  ├─ tracer.py              # FileTracer (마스킹 연결 지점, 2단계 ①에서 활성화)
 │  ├─ report.py              # 보고서 파일 저장
-│  ├─ dashboard.py           # HTML 대시보드 생성
+│  ├─ dashboard.py           # HTML 대시보드 생성 (시트: 현주소 / Competency / 임직원 자격 / 자체 평가)
+│  ├─ benchmark.py           # 현주소: 파트너 등급 순위·격차·다음 등급 조건·취득 전망 (가상 비교 데이터)
 │  └─ main.py                # CLI
 ├─ evaluation/
 │  ├─ eval_set.json          # SERVICE.md 5.2 (1단계 20문항 + 구현한 2단계 문항)
@@ -81,7 +82,7 @@ mini-pjt/
 │  └─ dev-guide.md           # 교안 개발 가이드 (스펙 주도 개발 규칙, 원래 루트 README.md)
 ├─ data/
 │  ├─ private/versions/      # 실제 Assessment Excel, 버전별 (git 제외, 내용 수정 금지)
-│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json, templates/ 산출물 양식 15종)
+│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json, templates/ 산출물 양식 15종, partner_benchmark.csv·tier_criteria.csv 등급 비교)
 │  └─ derived/               # 버전별 파싱 결과(requirements_<버전>.json)·산출물 추출 결과 (git 제외, 재생성 가능)
 ├─ reports/                  # 생성된 보고서·dashboard.html (git 제외)
 └─ ref/                      # 교안 레퍼런스 (git 제외, 수정 금지)

@@ -156,9 +156,18 @@ def evaluation_data() -> dict | None:
             "summary": latest["summary"], "history": history, "items": items}
 
 
+def benchmark_data() -> dict:
+    """현주소 시트: 우리 회사 vs 익명 A사~E사(가상). 파일 문제로 대시보드가 멈추지 않게 오류는 칸에 표시한다."""
+    try:
+        from src.benchmark import status
+        return status()
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
 def build_data() -> dict:
     return {"versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
-            "templates": embedded(load_templates()), "not_implemented": []}
+            "templates": embedded(load_templates()), "benchmark": benchmark_data(), "not_implemented": []}
 
 
 # ── HTML ──────────────────────────────────────────────────────────────────
@@ -167,12 +176,12 @@ PAGE = Template(r"""<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CompassPilot 대시보드</title>
 <style>
-:root{color-scheme:light;--bg:#f6f7f9;--card:#fcfcfb;--fg:#0b0b0b;--fg2:#52514e;--muted:#6b6a65;--line:#e1e0d9;--accent:#2a78d6;--track:#cde2fb;--chip:#eef2fb;
+:root{color-scheme:light;--bg:#f6f7f9;--card:#fcfcfb;--fg:#0b0b0b;--fg2:#52514e;--muted:#6b6a65;--line:#e1e0d9;--accent:#2a78d6;--track:#cde2fb;--chip:#eef2fb;--other:#c3c2b7;
 --good:#0ca30c;--warning:#fab219;--serious:#ec835a;--critical:#d03b3b;--good-text:#006300;--bad-text:#b42318;--note:#8a5a00;
 --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;--other:#55544f;
 --good-text:#0ca30c;--bad-text:#ff7b70;--note:#e0b050;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d0d0d;--card:#1a1a19;--fg:#f0efec;--fg2:#c3c2b7;--muted:#a3a29b;--line:#2c2c2a;--accent:#3987e5;--track:#0d2a4d;--chip:#26304a;--other:#55544f;
 --good-text:#0ca30c;--bad-text:#ff7b70;--note:#e0b050;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif}
@@ -183,6 +192,22 @@ header{padding:20px 16px 8px;max-width:1200px;margin:auto}
 .sheet-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sheet{display:grid;gap:16px}.sheet[hidden]{display:none}
 .sumsec .axis{border:0;padding:0;margin:0}
+.hero-sub{font-size:16px;font-weight:600;color:var(--fg2)}
+.tierchip{display:inline-block;border-radius:6px;padding:1px 10px;font-weight:700;background:var(--accent);color:#fff}
+.rung{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;border:1px solid var(--line);margin-bottom:6px}
+.rung.cur{border-color:var(--accent)}.rung-name{font-size:14px}
+.rung-cos{display:flex;gap:6px;flex-wrap:wrap}
+.co{border:1px solid var(--line);border-radius:12px;padding:0 10px;font-size:12.5px;background:var(--card)}
+.co.me{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.goal{font-size:12px;font-weight:700;color:var(--accent)}.goal.cur{color:var(--fg2)}
+.motiv{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.motiv ul{margin:4px 0 4px;padding-left:18px}.motiv li{margin:4px 0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.rank{display:grid;grid-template-columns:max-content 1fr max-content;gap:6px 10px;align-items:center;font-size:13px}
+.rank .track{height:14px;display:flex;align-items:center}
+.rank .track>div{height:14px;border-radius:0 4px 4px 0;min-width:2px}
+.rank .us{background:var(--accent)}.rank .other{background:var(--other)}
+.me-t{font-weight:700;color:var(--fg)}
 .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;margin:0}header p{margin:4px 0 0;color:var(--muted)}
 main{max-width:1200px;margin:auto;padding:8px 16px 40px;display:grid;gap:16px}
@@ -250,12 +275,16 @@ section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 <p>Competency(AWS M&amp;M Assessment)와 임직원 자격, 파트너 등급의 두 축을 한 화면에서 봅니다. 생성: $generated</p></div>
 <button class="btn" id="printbtn" type="button">인쇄</button></div></header>
 <nav class="sheets" role="tablist" aria-label="시트">
+<button type="button" role="tab" class="sheet-tab" id="tab-home" data-sheet="home">현주소</button>
 <button type="button" role="tab" class="sheet-tab" id="tab-comp" data-sheet="comp">Competency</button>
 <button type="button" role="tab" class="sheet-tab" id="tab-cert" data-sheet="cert">임직원 자격</button>
 <button type="button" role="tab" class="sheet-tab" id="tab-eval" data-sheet="eval">자체 평가</button>
 </nav>
 <main>
-<div class="sheet" id="sheet-comp" role="tabpanel" aria-labelledby="tab-comp">
+<div class="sheet" id="sheet-home" role="tabpanel" aria-labelledby="tab-home">
+<section id="home"></section>
+</div>
+<div class="sheet" id="sheet-comp" role="tabpanel" aria-labelledby="tab-comp" hidden>
 <section id="summary" class="sumsec"></section>
 <section id="ver"></section>
 <section id="todo"></section>
@@ -715,10 +744,89 @@ function renderTodo() {
   box.replaceChildren(el('h2', {}, '④ 준비 중'));
   box.append(el('p', {class: 'muted'}, '미구현: ' + D.not_implemented.join(', ')));
 }
+// ── 현주소 시트 (첫 화면): 우리 회사 vs 익명 A사~E사(가상 수치). 순위·격차·전망은 파이썬이 계산한 값을 보여만 준다 ──
+function renderHome() {
+  const box = document.getElementById('home'); box.replaceChildren();
+  box.append(el('div', {class: 'axis-h'}, el('h2', {style: 'margin:0'}, '우리 회사 현주소 · AWS 파트너 등급'),
+    el('span', {class: 'muted'}, '국내 대형 SI·IT서비스 5개 사(익명)와 비교 · 수치와 등급 기준은 모두 가상')));
+  const B = D.benchmark && ok(D.benchmark);
+  if (!B) { box.append(el('p', {class: 'muted'}, '데이터 없음' + (D.benchmark && D.benchmark.error ? ' (' + D.benchmark.error + ')' : ''))); return; }
+  const us = B.us, nt = B.next_tier, P = B.projection, M = Object.fromEntries(B.metrics.map(m => [m.metric, m]));
+
+  // 1) 종합 순위 + 등급 사다리
+  const left = el('div', {class: 'card'}, el('h4', {}, '종합 순위 (등급 → Competency 수 → 자격 인원 순)'),
+    el('div', {class: 'hero'}, B.overall_rank + '위', el('span', {class: 'hero-sub'}, ' / ' + B.companies + '개 사' + (B.tied ? ' (공동)' : ''))),
+    el('div', {}, '현재 등급 ', el('span', {class: 'tierchip'}, 'AWS ' + us.tier)));
+  if (B.nearest_above) { const g = B.nearest_above;
+    left.append(el('p', {class: 'muted', style: 'margin:8px 0 0'}, '바로 위 ' + g.company + '(' + g.tier + ')와 격차: Competency ' + g.competencies +
+      '개 · 자격 인원 ' + g.certified_people + '명 · 고객 사례 ' + g.launches + '건')); }
+  const ladder = el('div', {class: 'card'}, el('h4', {}, '등급 사다리'));
+  for (const t of B.tiers.slice().reverse()) {
+    const isNext = nt && t.tier === nt.tier, isCur = t.tier === us.tier;
+    ladder.append(el('div', {class: 'rung' + (isCur ? ' cur' : '')},
+      el('b', {class: 'rung-name'}, t.tier), el('div', {class: 'rung-cos'},
+        ...(t.companies.length ? t.companies.map(c => el('span', {class: 'co' + (c === us.company ? ' me' : '')}, c)) : [el('span', {class: 'muted'}, '-')])),
+      isNext ? el('span', {class: 'goal'}, '다음 목표') : (isCur ? el('span', {class: 'goal cur'}, '현재') : '')));
+  }
+  box.append(el('div', {class: 'sum'}, left, ladder));
+
+  // 2) 다음 등급 조건 + 3) 취득하면 이렇게 바뀐다
+  const row2 = el('div', {class: 'sum', style: 'margin-top:16px'});
+  if (nt) {
+    const c = el('div', {class: 'card'}, el('h4', {}, '다음 등급 ' + nt.tier + '까지 (조건 ' + nt.conditions.filter(x => x.met).length + '/' + nt.conditions.length + ' 충족)'));
+    const g = el('div', {class: 'vrows'});
+    for (const x of nt.conditions) {
+      const rate = Math.min(1, x.current / x.required);
+      g.append(el('span', {}, x.label), meter(rate, x.label + ' ' + x.current + ' / 기준 ' + x.required + x.unit),
+        el('span', {class: x.met ? 'ok' : 'bad'}, x.current + ' / ' + x.required + x.unit + (x.met ? ' ✓ 충족' : ' · ' + x.gap + x.unit + ' 부족')));
+    }
+    c.append(g); row2.append(c);
+  } else row2.append(el('div', {class: 'card'}, el('h4', {}, '최고 등급입니다'), el('p', {class: 'muted'}, '등급 유지 조건을 지켜 주세요.')));
+  if (P) {
+    const pm = P.next_tier ? P.next_tier.conditions.filter(x => x.met).length : null;
+    const v = D.versions.latest && D.versions.versions[D.versions.latest], df = v && ok(v.difficulty);
+    const rc = df ? countBy(df.items, 'readiness') : null;
+    const mot = el('div', {class: 'card motiv'}, el('h4', {}, P.competency + ' Competency를 취득하면'),
+      el('ul', {},
+        el('li', {}, 'Competency ', el('b', {}, us.competencies + ' → ' + P.competencies + '개'), ', Competency 순위 ',
+          el('b', {}, M.competencies.rank + '위 → ' + P.competency_rank + '위' + (P.competency_tied ? '(공동)' : ''))),
+        P.next_tier ? el('li', {}, P.next_tier.tier + ' 조건 ', el('b', {}, nt.conditions.filter(x => x.met).length + '/' + nt.conditions.length + ' → ' + pm + '/' + P.next_tier.conditions.length + ' 충족')) : '',
+        P.tier_up ? el('li', {}, '남은 조건: ', el('b', {}, P.tier_up.remaining.map(x => x.label + ' ' + x.gap + x.unit).join(', ')),
+          ' → 채우면 ', el('b', {}, P.tier_up.tier + ' 등급 진입'), P.tier_up.same_tier.length ? ' (' + P.tier_up.same_tier.join('·') + '와 같은 등급)' : '') : ''),
+      rc ? el('p', {class: 'muted', style: 'margin:4px 0 8px'}, 'M&M 준비 현황: 준비완료 ' + Math.round((rc['준비완료'] || 0) / df.items.length * 100) + '% · 미준비 ' + (rc['미준비'] || 0) + '개 · 난이도 상 ' + df.counts.high + '개') : '');
+    const b1 = el('button', {class: 'btn', type: 'button'}, 'M&M 준비 현황 보기'); b1.addEventListener('click', () => goSheet('comp', 'summary'));
+    const b2 = el('button', {class: 'btn', type: 'button'}, '자격 취득 현황 보기'); b2.addEventListener('click', () => goSheet('cert', 'summary2'));
+    mot.append(el('div', {class: 'row', style: 'margin:0'}, b1, b2));
+    row2.append(mot);
+  }
+  box.append(row2);
+
+  // 4) 지표별 순위 (우리 회사만 강조색, 나머지 회색)
+  const charts = el('div', {class: 'grid3', style: 'margin-top:16px'});
+  for (const m of B.metrics) {
+    const max = Math.max(...m.companies.map(x => x.value)) || 1;
+    const bars = el('div', {class: 'rank', role: 'img', 'aria-label': m.label + ' 순위: ' + m.companies.map(x => x.company + ' ' + x.value).join(', ')});
+    for (const x of m.companies) {
+      bars.append(el('span', {class: x.is_us ? 'me-t' : ''}, x.company),
+        hover(el('div', {class: 'track'}, el('div', {class: x.is_us ? 'us' : 'other', style: 'width:' + Math.max(1, Math.round(100 * x.value / max)) + '%'})),
+          x.value + m.unit + ' · ' + x.company),
+        el('span', {class: x.is_us ? 'me-t' : 'muted'}, x.value + m.unit));
+    }
+    charts.append(el('div', {class: 'card'}, el('h4', {}, m.label + ' · 우리 ' + m.rank + '위'), bars,
+      el('p', {class: 'rule', style: 'margin:8px 0 0'}, '1위와 ' + m.gap_to_leader + m.unit + ' 차이' + (m.gap_to_next ? ' · 바로 위와 ' + m.gap_to_next + m.unit + ' 차이' : ' · 공동 또는 1위'))));
+  }
+  box.append(charts);
+
+  // 5) 전체 비교 표
+  box.append(el('h3', {}, '전체 비교 (가상 수치)'), table(['종합 순위', '회사', 'AWS 등급', 'Competency', 'AWS 자격 인원', '고객 사례'],
+    B.table.map(r => [String(r.rank), r.is_us ? el('b', {}, r.company) : r.company, r.tier, String(r.competencies), String(r.certified_people), String(r.launches)])),
+    el('p', {class: 'rule', style: 'margin-top:8px'}, '비교 회사는 익명(A사~E사)이며 수치·등급 기준은 시연용 가상 데이터입니다(data/sample/partner_benchmark.csv, tier_criteria.csv). 실제 공개 자료로 바꿀 때는 CSV만 고칩니다.'));
+}
+
 // ── 시트 전환 (엑셀 시트처럼). 고른 시트는 주소 #view=comp·cert·eval에 남겨 새로고침·공유해도 유지한다 ──
-const SHEETS = ['comp', 'cert', 'eval'];
+const SHEETS = ['home', 'comp', 'cert', 'eval'];
 function showSheet(key, keepHash) {
-  if (!SHEETS.includes(key)) key = 'comp';
+  if (!SHEETS.includes(key)) key = 'home';
   for (const k of SHEETS) {
     const panel = document.getElementById('sheet-' + k), tab = document.getElementById('tab-' + k);
     if (panel) { if (k === key) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', ''); }
@@ -733,7 +841,7 @@ function goSheet(key, targetId) { showSheet(key); const t = document.getElementB
   if (t && t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); }
 
 const pb = document.getElementById('printbtn'); if (pb) pb.addEventListener('click', () => window.print());
-renderVersions(); renderSummary(); renderCerts(); renderEval(); renderTodo();
+renderVersions(); renderSummary(); renderCerts(); renderEval(); renderTodo(); renderHome();
 showSheet(((typeof location !== 'undefined' && location.hash) || '').replace(/^#(view=)?/, ''), true);
 </script></body></html>
 """)

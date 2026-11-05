@@ -46,15 +46,21 @@ class TestDashboard(unittest.TestCase):
         mob = next(i for i in dv["items"] if i["id"] == "MOB-004")
         self.assertEqual(mob["cases"], "고객 사례 4건 중 2건 이상")
 
-    def test_layout_sheets_tabs_filters(self):  # 시트 3개(첫 시트만 보임), 버전 칸 탭 3개, 검색·필터
+    def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 3개, 검색·필터
         for key in ("'changes'", "'prep'", "'all'"):
             self.assertIn(key, self.html)
         self.assertIn('type: \'search\'', self.html)
         sheets = re.findall(r'<div class="sheet" id="sheet-(\w+)"[^>]*?(hidden)?>', self.html)
-        self.assertEqual(sheets, [("comp", ""), ("cert", "hidden"), ("eval", "hidden")])
+        self.assertEqual(sheets, [("home", ""), ("comp", "hidden"), ("cert", "hidden"), ("eval", "hidden")])
         # 각 시트에 맞는 칸이 들어 있다
         self.assertRegex(self.html, re.compile(
-            r'id="sheet-comp".*?id="summary".*?id="ver".*?id="sheet-cert".*?id="summary2".*?id="cert".*?id="sheet-eval".*?id="eval"', re.S))
+            r'id="sheet-home".*?id="home".*?id="sheet-comp".*?id="summary".*?id="ver".*?id="sheet-cert".*?id="summary2".*?id="cert"'
+            r'.*?id="sheet-eval".*?id="eval"', re.S))
+
+    def test_benchmark_section(self):  # 현주소: 6개 사 중 4위, 비교 회사는 익명
+        b = self.data["benchmark"]
+        self.assertEqual((b["companies"], b["overall_rank"], b["next_tier"]["tier"]), (6, 4, "Premier"))
+        self.assertEqual(sorted(r["company"] for r in b["table"] if not r["is_us"]), ["A사", "B사", "C사", "D사", "E사"])
 
     def test_cert_targets_section(self):  # 대상 대비 실적(숫자만)
         t = self.data["certs"]["targets"]
