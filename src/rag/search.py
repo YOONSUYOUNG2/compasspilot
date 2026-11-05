@@ -6,6 +6,7 @@
 실행(검색 정확도 사전 점검): python -m src.rag.search
 """
 import sys
+import threading
 from functools import lru_cache
 
 from langchain_core.tools import tool
@@ -16,9 +17,19 @@ from src.rag.index import get_vectorstore
 TOP_K = 4
 
 
+_STORE_LOCK = threading.Lock()
+
+
 @lru_cache(maxsize=1)
-def _store():
+def _cached_store():
     return get_vectorstore()
+
+
+def _store():
+    """Chroma 저장소를 한 번만 연다. 평가처럼 여러 문항이 동시에 첫 검색을 하면
+    Chroma 클라이언트를 동시에 만들다 충돌하므로(라운드 7 #2·#3) 잠금을 건다."""
+    with _STORE_LOCK:
+        return _cached_store()
 
 
 def search(query: str, version: str | None = None, k: int = TOP_K) -> list[dict]:

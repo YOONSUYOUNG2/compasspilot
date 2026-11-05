@@ -2,6 +2,8 @@
 
 실행하면 연결 점검을 한다: python -m src.llm
 """
+import os
+
 from langchain_aws import BedrockEmbeddings, ChatBedrockConverse
 
 from src import config
@@ -40,8 +42,16 @@ def get_judge_llm() -> ChatBedrockConverse:
 
 
 def get_embeddings() -> BedrockEmbeddings:
-    """Requirement 색인·검색용 임베딩."""
+    """Requirement 색인·검색용 임베딩.
+
+    .env에 EMBED_AWS_ACCESS_KEY_ID·EMBED_AWS_SECRET_ACCESS_KEY가 있으면 임베딩만 그 키로 호출한다
+    (대화 모델 키의 계정에 Titan 권한이 없을 때). 없으면 기본 키를 쓴다. 키 값은 출력하지 않는다.
+    """
     model_id, region = config.EMBED_MODEL
+    key_id, secret = os.getenv("EMBED_AWS_ACCESS_KEY_ID"), os.getenv("EMBED_AWS_SECRET_ACCESS_KEY")
+    if key_id and secret:
+        return BedrockEmbeddings(model_id=model_id, region_name=region,
+                                 aws_access_key_id=key_id, aws_secret_access_key=secret)
     return BedrockEmbeddings(model_id=model_id, region_name=region)
 
 

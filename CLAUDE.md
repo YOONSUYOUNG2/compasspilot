@@ -18,6 +18,7 @@
 
 - Python, LangGraph(+ `langgraph-supervisor`), LangChain AWS(Bedrock), Chroma, FastMCP
 - 인증: `.env`의 AWS 액세스 키(`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), 기본 리전 `us-east-1`
+  - 2026-11-05 Sonnet 하루 토큰 한도 소진으로 대화 모델 키를 다른 계정 키로 바꿨다. 새 계정에 Titan 권한이 없어 임베딩만 기존 키(`EMBED_AWS_ACCESS_KEY_ID`, `EMBED_AWS_SECRET_ACCESS_KEY`, 선택)로 호출한다(사용자 승인). 모델·리전·파라미터는 같다.
 - 모델 ID와 리전은 **`src/config.py`에만** 정의하고, LLM 객체는 **`src/llm.py`의 생성 함수로만** 만든다(코드 곳곳에 모델 ID를 쓰지 않는다).
 
 | 용도 | 모델 | 리전 |
