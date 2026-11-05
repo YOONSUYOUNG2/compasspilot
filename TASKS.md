@@ -34,7 +34,7 @@
   - 확인: unittest — 권한·소속별 명단 정답 100%, 범위 밖 거절 (S7)
 - [x] **T13 ① 연결·마스킹**: `workforce_agent` 연결 + 이름 마스킹(답변·trace) + 평가 21~27번 추가 (1h)
   - 확인: unittest + trace 검색에서 staff 이름 0건 (S8), 평가 재실행(다음 라운드 보고서)
-- [ ] **T14 ② HTML 대시보드**(버전 드롭다운 포함) + 테스트 (1.5h)
+- [x] **T14 ② HTML 대시보드**(버전 드롭다운 포함) + 테스트 (1.5h)
   - 확인: `python -m src.dashboard` → `reports/dashboard.html`이 브라우저에서 열림, 변경 건수 정답 일치·이름 0건 (S10)
 - [ ] **T15 ③ 난이도**: 준비 상태 가상 데이터 + `assess_difficulty` + 테스트 + 평가 28~29번 (1h)
   - 확인: unittest 규칙 100% 일치 (S9)
