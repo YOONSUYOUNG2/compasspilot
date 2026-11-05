@@ -18,6 +18,7 @@ warnings.showwarning = lambda *args, **kwargs: None
 from src import config  # noqa: E402
 from src.agents import build_app, format_report, get_text  # noqa: E402
 from src.guards.input_guard import input_guard, log_block, refusal_text  # noqa: E402
+from src.report import is_report_request, save_report, with_appendix  # noqa: E402
 from src.tracer import FileTracer  # noqa: E402
 from src.guards.masking import mask_text  # noqa: E402
 from src.workforce.directory import get_user  # noqa: E402
@@ -87,10 +88,11 @@ def strip_unsupported_notes(answer: str, tools_used: list[str]) -> str:
     return "\n".join(line for line in answer.splitlines() if NOTE_TAG not in line).rstrip()
 
 
-async def ask(app, question: str, user_id: str = DEFAULT_USER, callbacks=None) -> dict:
+async def ask(app, question: str, user_id: str = DEFAULT_USER, callbacks=None, save_reports: bool = True) -> dict:
     """질문 하나를 실행한다: 입력 가드레일 → Supervisor. 모든 단계는 trace.jsonl에 남는다.
 
-    반환: {"answer": 최종 답변, "blocked": 차단 여부, "result": 그래프 결과(차단 시 None)}
+    반환: {"answer": 최종 답변, "blocked": 차단 여부, "result": 그래프 결과(차단 시 None),
+           "report_files": 보고서 요청이면 {"en": 경로, "ko": 경로}, 아니면 None}
     """
     start = time.time()
     tracer = FileTracer(user_id=user_id, mask=mask_text)  # 모든 trace는 기록 직전 이름 마스킹
@@ -118,14 +120,23 @@ async def ask(app, question: str, user_id: str = DEFAULT_USER, callbacks=None) -
     answer = ensure_not_covered_phrase(answer)
     if get_user(user_id)["role"] == "staff":
         answer = mask_text(answer)  # 일반 권한 답변은 출력 직전 이름 마스킹
+    report_files = None
+    if is_report_request(question):
+        # 2단계 ⑤: 긴 목록은 도구 결과로 코드가 부록 표를 붙이고, 영문·국문 두 파일로 저장(영문본에는 [내부 메모] 없음)
+        answer = with_appendix(answer, tracer.tool_outputs)
+    if save_reports and is_report_request(question):
+        report_files = save_report(question, answer)
+        tracer.report_saved(report_files)
     tracer.answer(answer, time.time() - start)
-    return {"answer": answer, "blocked": False, "result": result}
+    return {"answer": answer, "blocked": False, "result": result, "report_files": report_files}
 
 
 async def _main(question: str, user_id: str):
     app = await build_app()
     out = await ask(app, question, user_id)
     print(out["answer"])
+    if out.get("report_files"):
+        print(f"\n[보고서 저장] {out['report_files']['en']}\n[보고서 저장] {out['report_files']['ko']}")
 
 
 if __name__ == "__main__":

@@ -61,6 +61,9 @@ class FileTracer(BaseCallbackHandler):
     def repaired(self, reason: str):
         self._write({"event": "answer_repaired", "reason": reason})
 
+    def report_saved(self, paths: dict):
+        self._write({"event": "report_saved", "files": paths})
+
     def blocked(self, text: str, reason: str):
         self._write({"event": "guard_block", "input": text, "reason": reason})
 

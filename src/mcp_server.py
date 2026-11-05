@@ -95,7 +95,7 @@ def assess_difficulty(requirement_ids: str = "", version: str = "") -> str:
 
 
 @mcp.tool()
-def list_deliverables(requirement_ids: str = "", version: str = "") -> str:
+def list_deliverables(requirement_ids: str = "", version: str = "", scope: str = "") -> str:
     """Requirement별로 제출해야 할 산출물(증빙 자료)과 고객 사례 4건 체크리스트를 보여 준다.
 
     언제 쓰나: "MOB-004에 필요한 산출물", "무엇을 제출/준비해야 하나(증빙 자료 목록)", "고객 사례별 준비 체크리스트".
@@ -104,18 +104,24 @@ def list_deliverables(requirement_ids: str = "", version: str = "") -> str:
       난이도(→ assess_difficulty).
 
     산출물은 색인할 때 원문에서 미리 추출해 둔 결과다(이 도구는 LLM을 호출하지 않는다). 목록을 지어내거나 더하지 말고 그대로 보고한다.
-    결과(JSON): version, items[{id, title, scope, checklist, customer_examples_required, deliverables[{name, description}]}], unknown_ids
+    결과(JSON): version, summary(파이썬 집계: requirements, deliverables, company_level, customer_all_4,
+      customer_at_least_2_or_3, customer_at_least_1 — 개수는 직접 세지 말고 이 값을 인용한다),
+      items[{id, title, scope, checklist, customer_examples_required, deliverables[{name, description}]}], unknown_ids
       customer_examples_required: 고객 사례 4건 중 몇 건에 준비해야 하는지 (회사 차원 항목은 null)
 
     Args:
         requirement_ids: 쉼표로 구분한 ID (예: "MOB-004,PS-001"). 비우면 해당 버전 전체.
         version: 버전 (예: "2026-08"). 비우면 최신 버전.
+        scope: "customer_example"이면 고객 사례 4건마다 증빙하는 항목만, "company"면 회사 차원 항목만. 비우면 전체.
+          "고객 사례(4건) 준비용 체크리스트"에는 "customer_example"을 넣는다.
     """
     versions = parser.list_versions()
     if version and version not in versions:
         return json.dumps({"error": f"Unknown version '{version}'", "registered_versions": versions})
+    if scope and scope not in ("company", "customer_example"):
+        return json.dumps({"error": f"Unknown scope '{scope}'. Use 'company' or 'customer_example'."})
     ids = [i for i in requirement_ids.replace(" ", ",").split(",") if i.strip()]
-    return json.dumps(deliverables.lookup(ids or None, version or None), ensure_ascii=False)
+    return json.dumps(deliverables.lookup(ids or None, version or None, scope=scope or None), ensure_ascii=False)
 
 
 if __name__ == "__main__":

@@ -45,6 +45,8 @@ ASSESSMENT_PROMPT = f"""You are the requirement search specialist for the AWS Mi
 - Be concise and focused: start with the requirement that directly answers the question.
   Do not add loosely related requirements unless the user asked for them.
 - Always write your report in English, even when the question is in Korean.
+- Report requests (보고서/report): search at most 3 times with broad queries and give a short summary of the key
+  requirements with [ID: ...] citations (at most about 12 lines). Do not search item by item; full lists come from other tools.
 - Never compare assessment versions yourself (do not search old versions to find differences).
   If the question also asks what changed, report only the requirement content; the version change is handled by another agent.
 """
@@ -58,6 +60,11 @@ and preparation difficulty (assess_difficulty).
 - For deliverables / evidence artifacts to prepare (산출물, 제출 자료, 체크리스트), call list_deliverables and report each item's
   deliverables and customer-example checklist exactly as returned. Never add deliverables of your own.
   For deliverables of new/changed items, call diff_versions first to get the IDs, then list_deliverables with those IDs.
+  For a customer-example checklist, call list_deliverables with scope="customer_example".
+- Report requests (보고서/report): the system appends the full tool results to the report as tables. Do NOT reproduce
+  long lists. Report a short summary only (at most about 12 lines): counts, how many items need all 4 customer examples
+  vs. fewer, and 3-5 notable items with [ID: ...] citations.
+- Counts: never count items yourself. Quote counts only from the tool's "summary" / "counts" fields.
 - change_type meaning: substantive = meaningful change, minor_notation = case/punctuation only, minor_typo = spelling fix only.
 - Terms: "changed" items (바뀐/변경된 항목) = every entry in the diff "changed" list, including minor changes (label them minor).
   "new/added" items (신규/추가된 항목) = the "added" list. Do not mix them: for a question about changed items, use only the
@@ -105,6 +112,13 @@ SUPERVISOR_PROMPT = f"""You are the Supervisor of CompassPilot, an internal assi
 - Employee certifications (AWS/Google Cloud/OpenAI certification counts, holders, name lists, 자격증 보유 현황·명단) -> workforce_agent
 - ONLY greetings, small talk, and "what can you do" -> general_agent
 - If a question needs both, call assessment_agent and competency_agent in order.
+- Report requests (보고서, report): the system saves your final answer as report files. Gather facts from every relevant agent
+  first - requirement evidence and citations from assessment_agent, and computed lists (deliverables, difficulty, changes)
+  from competency_agent - then write a concise structured report (headings: Summary, Key requirements with [ID: ...],
+  How to use the checklist). Do not reproduce long item lists: the system appends the full checklist/difficulty tables.
+  Keep the report under about 40 lines. Use only counts that an agent reported from a tool; never compute counts yourself.
+  For a customer-example deliverables checklist report, call assessment_agent (what the customer-example requirements ask
+  for) and competency_agent (list_deliverables with scope "customer_example").
 - Whenever the question asks what changed between versions (바뀌었, 변경, changed, difference, 이번 버전), you MUST call
   competency_agent, even if assessment_agent already said something about changes. Version comparison is done only by its tool.
 [Rules]

@@ -66,6 +66,20 @@ class TestLookup(unittest.TestCase):
             self.assertEqual(r["unknown_ids"], ["XYZ-999"])
 
     @unittest.skipUnless(DELIVERABLES_PATH.exists(), "산출물 추출 결과가 없어 건너뜀")
+    def test_scope_filter(self):  # 고객 사례 항목 35개 / 회사 차원 20개 (2026-08)
+        customer = lookup(scope="customer_example")["items"]
+        self.assertEqual(len(customer), 35)
+        self.assertTrue(all(i["customer_examples_required"] for i in customer))
+        self.assertEqual(len(lookup(scope="company")["items"]), 20)
+
+    @unittest.skipUnless(DELIVERABLES_PATH.exists(), "산출물 추출 결과가 없어 건너뜀")
+    def test_summary_counts(self):  # 집계는 파이썬이 센다 (T17에서 LLM이 33/16/7/10으로 잘못 셈)
+        s = lookup(scope="customer_example")["summary"]
+        self.assertEqual((s["requirements"], s["customer_all_4"], s["customer_at_least_2_or_3"], s["customer_at_least_1"],
+                          s["company_level"]), (35, 21, 7, 7, 0))
+        self.assertEqual(s["deliverables"], sum(len(i["deliverables"]) for i in lookup(scope="customer_example")["items"]))
+
+    @unittest.skipUnless(DELIVERABLES_PATH.exists(), "산출물 추출 결과가 없어 건너뜀")
     def test_real_store_covers_all_versions(self):
         store = json.loads(DELIVERABLES_PATH.read_text(encoding="utf-8"))
         for label in ("2025-08", "2026-08"):

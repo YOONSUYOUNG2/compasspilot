@@ -139,14 +139,20 @@ def checklist_text(n: int | None) -> str:
     return f"prepare for at least {n} of the {CASES_TOTAL} customer examples"
 
 
-def lookup(ids: list[str] | None = None, version: str | None = None, path=DELIVERABLES_PATH) -> dict:
-    """저장된 추출 결과만 읽어 Requirement별 산출물과 고객 사례 체크리스트를 돌려준다(LLM 호출 없음)."""
+def lookup(ids: list[str] | None = None, version: str | None = None, path=DELIVERABLES_PATH,
+           scope: str | None = None) -> dict:
+    """저장된 추출 결과만 읽어 Requirement별 산출물과 고객 사례 체크리스트를 돌려준다(LLM 호출 없음).
+
+    scope: "company" 또는 "customer_example"이면 그 범위의 항목만 돌려준다.
+    """
     version = version or parser.latest_version()
     store = load_store(path)
     if version not in store.get("versions", {}):
         return {"error": f"No deliverables extracted for version {version}. Run: python -m src.assessment.deliverables"}
     by_id = {r["id"]: r for r in parser.load(version)["requirements"]}
     wanted = [i.strip().upper() for i in ids if i.strip()] if ids else list(by_id)
+    if scope:
+        wanted = [i for i in wanted if i not in by_id or by_id[i]["scope"] == scope]
     items, unknown = [], []
     for rid in wanted:
         h = store["versions"][version].get(rid)
@@ -159,7 +165,18 @@ def lookup(ids: list[str] | None = None, version: str | None = None, path=DELIVE
                       "checklist": checklist_text(n),
                       "customer_examples_required": n,
                       "deliverables": [{"name": d["name"], "description": d["description"]} for d in rec["deliverables"]]})
-    return {"version": version, "items": items, "unknown_ids": unknown}
+    return {"version": version, "summary": summarize(items), "items": items, "unknown_ids": unknown}
+
+
+def summarize(items: list[dict]) -> dict:
+    """체크리스트 집계(파이썬 계산). 에이전트는 개수를 직접 세지 않고 이 값을 인용한다(T17 보고서에서 LLM이 잘못 셈)."""
+    need = [i["customer_examples_required"] for i in items]
+    return {"requirements": len(items),
+            "deliverables": sum(len(i["deliverables"]) for i in items),
+            "company_level": sum(1 for n in need if not n),
+            "customer_all_4": sum(1 for n in need if n and n >= CASES_TOTAL),
+            "customer_at_least_2_or_3": sum(1 for n in need if n in (2, 3)),
+            "customer_at_least_1": sum(1 for n in need if n == 1)}
 
 
 if __name__ == "__main__":
