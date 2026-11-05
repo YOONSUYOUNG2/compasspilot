@@ -6,7 +6,7 @@
 
 - 무엇을 만드는지는 **SERVICE.md가 기준**이다. 애매하면 추측하지 말고 사용자에게 물어본다.
 - **한 번에 TASKS.md의 작업 하나만** 한다. 작업이 끝나면 TASKS.md에 체크하고, 사용자 확인 후 커밋한다.
-- **사용자 허락 없이 신규 프레임워크·라이브러리를 들이지 않는다.** 허용 목록은 `langgraph`, `langgraph-supervisor`, `langchain-aws`, `langchain-chroma`, `chromadb`, `mcp`(FastMCP), `langchain-mcp-adapters`, `python-dotenv`, `boto3`와 그 의존 패키지뿐이다(2026-11-05 사용자 승인). 버전은 `requirements.txt`에 고정한다. 에러를 고치다가 처음 보는 패키지나 함수가 필요하면 먼저 사용자에게 확인한다.
+- **사용자 허락 없이 신규 프레임워크·라이브러리를 들이지 않는다.** 허용 목록은 `langgraph`, `langgraph-supervisor`, `langchain-aws`, `langchain-chroma`, `chromadb`, `fastmcp`·`mcp`(FastMCP), `langchain-mcp-adapters`, `python-dotenv`, `boto3`와 그 의존 패키지(`langchain-core`, `pydantic` 등)뿐이다(2026-11-05 사용자 승인). 버전은 교안 실습 환경과 같다. 버전은 `requirements.txt`에 고정한다. 에러를 고치다가 처음 보는 패키지나 함수가 필요하면 먼저 사용자에게 확인한다.
 - **계산·비교·규칙 판정은 파이썬 코드**로 한다(버전 비교, 난이도, 권한, 준비 상태 환산). LLM은 질의 해석, 답변 작성·번역, 산출물 추출에만 쓴다.
 - 구조는 교안 베이스라인 `ref/day7-checkpoint/`(로컬 전용, git 제외)를 참고한다. 특히 `final_scenario.py`(Supervisor), `local_tracer.py`, `guards_input.py`, `run_eval.py`를 참고한다. `ref/`의 파일은 수정하지 않는다.
 - 에러가 나면 **고치기 전에 원인과 바꿀 파일을 먼저 설명**한다.

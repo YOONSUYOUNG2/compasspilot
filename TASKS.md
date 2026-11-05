@@ -5,7 +5,7 @@
 
 ## 1단계 (필수) — 목표: 11/5 저녁 (오늘: 에이전트·도구·RAG·가드레일·트레이스, 평가 라운드)
 
-- [ ] **T1 환경**: requirements.txt(버전 고정), venv, `src/config.py`, `src/llm.py`(대체 모델 포함) (1h)
+- [x] **T1 환경**: requirements.txt(버전 고정), venv, `src/config.py`, `src/llm.py`(대체 모델 포함) (1h)
   - 확인: `python -m src.llm` → Sonnet 응답 1줄 + Titan 임베딩 차원(1024) 출력. Python 3.14에서 설치가 실패하면 사용자에게 3.12 설치 여부 확인
 - [ ] **T2 Excel 파서** + 테스트 (1h)
   - 확인: unittest 통과 — OLD 47개·NEW 55개, Validity Period 저장, internal_note 분리

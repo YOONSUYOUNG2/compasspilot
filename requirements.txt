@@ -1,0 +1,13 @@
+# 교안 실습 환경(sds-ax-practice, Python 3.14)에서 동작 확인된 버전으로 고정
+langgraph==1.2.17
+langgraph-supervisor==0.0.31
+langchain-core==1.7.0
+langchain-aws==1.9.0
+langchain-chroma==1.1.0
+chromadb==1.5.9
+fastmcp==2.13.0
+mcp==1.30.0
+langchain-mcp-adapters==0.3.2
+python-dotenv==1.2.4
+boto3==1.43.118
+pydantic==2.14.1
