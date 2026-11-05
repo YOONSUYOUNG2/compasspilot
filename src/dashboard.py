@@ -161,6 +161,14 @@ th{color:var(--muted);font-weight:600;white-space:nowrap}
 select{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .bar{height:8px;background:var(--accent);border-radius:4px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:16px 0 12px;flex-wrap:wrap}
+.tab{font:inherit;background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;color:var(--muted);cursor:pointer}
+.tab.on{color:var(--fg);border-bottom-color:var(--accent);font-weight:600}
+input[type=search]{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);min-width:180px}
+details.sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+details.sec>summary{cursor:pointer;font-weight:600;font-size:16px}
+details.sec[open]>summary{margin-bottom:12px}
+.rule{font-size:12px;color:var(--muted);margin:0 0 8px}
 footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
 </style></head><body>
 <header><h1>CompassPilot · CSP 파트너 등급 관리 대시보드</h1>
@@ -168,8 +176,8 @@ footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-
 <main>
 <section id="ver"></section>
 <section id="cert"></section>
-<section id="eval"></section>
 <section id="todo"></section>
+<details class="sec"><summary id="evalsum">③ 자체 평가 결과</summary><div id="eval"></div></details>
 </main>
 <footer>사내 확인용. 자격 현황은 숫자 집계만 표시합니다(이름 없음). 원문·ID는 AWS 영문 그대로입니다.</footer>
 <script id="data" type="application/json">$data</script>
@@ -194,48 +202,107 @@ function renderVersions() {
   const body = el('div'); box.append(body);
   const draw = label => {
     const v = V.versions[label], d = v.diff; body.replaceChildren();
+    const df = v.difficulty && !v.difficulty.error ? v.difficulty : null;
+    const dv = v.deliverables && !v.deliverables.error ? v.deliverables : null;
     body.append(el('p', {class: 'muted'}, `유효기간: $${v.validity || '-'}`));
     const k = el('div', {class: 'kpis'}, kpi(v.total, '요구사항'));
     if (d) { k.append(kpi(d.counts.added, '추가'), kpi(d.counts.removed, '삭제'), kpi(d.counts.substantive, '실질 변경'),
       kpi(d.counts.minor, '경미 변경'), kpi(d.counts.sheet_notes_changed, '안내문 변경')); }
+    if (df) k.append(kpi(df.counts.high, '난이도 상'), kpi(df.counts.medium, '난이도 중'), kpi(df.counts.low, '난이도 하'));
+    if (dv) k.append(kpi(dv.total, '산출물'));
     body.append(k);
-    if (!d) { body.append(el('p', {class: 'muted'}, '첫 등록 버전이라 비교 대상이 없습니다.')); }
-    else {
-      body.append(el('h3', {}, `$${d.from} → $${label} 변경 내역`));
-      const rows = [
-        ...d.added.map(a => [el('span', {class: 'chip'}, '추가'), a.id, a.title, '', el('span', {class: 'note'}, a.note ? '[내부 메모] ' + a.note : '')]),
-        ...d.removed.map(r => [el('span', {class: 'chip'}, '삭제'), r.id, r.title, '', '']),
-        ...d.changed.map(c => [el('span', {class: 'chip'}, TYPE[c.type] || c.type), c.id, c.title,
-          el('span', {class: 'chg'}, changesText(c.changes)), el('span', {class: 'note'}, c.note ? '[내부 메모] ' + c.note : '')]),
-        ...d.sheet_notes.map(n => [el('span', {class: 'chip'}, '안내문 ' + (TYPE[n.type] || n.type)), '(시트 안내문)', n.sheet,
-          el('span', {class: 'chg'}, changesText(n.changes)), '']),
-      ];
-      body.append(table(['구분', 'ID', '제목', '바뀐 부분', '내부 메모'], rows));
-    }
-    const df = v.difficulty;
-    body.append(el('h3', {}, `$${label} 판 준비 난이도 (미준비 +2 · 일부 +1 · 고객 사례 4건 증빙 +1 · 이번 버전 신규 +1)`));
-    if (!df || df.error) { body.append(el('p', {class: 'muted'}, '데이터 없음' + (df && df.error ? ' (' + df.error + ')' : ''))); }
-    else {
-      body.append(el('div', {class: 'kpis'}, kpi(df.counts.high, '상 (3~4점)'), kpi(df.counts.medium, '중 (2점)'), kpi(df.counts.low, '하 (0~1점)')));
-      body.append(el('p', {class: 'muted'}, '준비 상태 출처: data/sample/readiness.csv (가상 데이터). 파일에 없는 항목은 미준비로 계산합니다.'));
-      body.append(table(['난이도', '점수', 'ID', '제목', '준비 상태', '점수 근거'], df.items.map(i =>
-        [el('span', {class: i.level === '상' ? 'bad' : (i.level === '중' ? 'note' : 'ok')}, i.level), String(i.score), i.id, i.title,
-         i.readiness, el('span', {class: 'chg'}, i.reasons.join(' / '))])));
-    }
-    const dv = v.deliverables;
-    body.append(el('h3', {}, `$${label} 판 산출물 체크리스트`));
-    if (!dv || dv.error) { body.append(el('p', {class: 'muted'}, '데이터 없음' + (dv && dv.error ? ' (' + dv.error + ')' : ''))); }
-    else {
-      body.append(el('div', {class: 'kpis'}, kpi(dv.total, '산출물'), kpi(dv.company, '회사 차원 항목'), kpi(dv.customer, '고객 사례 항목')));
-      body.append(el('p', {class: 'muted'}, '색인할 때 원문에서 한 번 추출한 결과입니다(근거 문장은 원문 대조로 확인). 프로젝트 착수 전에 고객 사례별로 챙길 목록입니다.'));
-      body.append(table(['ID', '제목', '준비 범위', '산출물'], dv.items.map(i =>
-        [i.id, i.title, i.cases, el('span', {class: 'chg'}, i.deliverables.map(n => '☐ ' + n).join('\n'))])));
-    }
-    body.append(el('h3', {}, `$${label} 판 요구사항 $${v.total}개`));
-    body.append(table(['ID', '제목', '시트', '영역', '범위', '내부 메모'],
-      v.requirements.map(r => [r.id, r.title, r.sheet, r.area, r.scope, el('span', {class: 'note'}, r.note)])));
+    const nChanges = d ? d.added.length + d.removed.length + d.changed.length + d.sheet_notes.length : 0;
+    const TABS = [['changes', d ? `변경 내역 ($${nChanges})` : '변경 내역'], ['prep', '준비 현황 (난이도·산출물)'],
+                  ['all', `요구사항 전체 ($${v.total})`]];
+    const pane = el('div');
+    const buttons = TABS.map(([key, name]) => { const b = el('button', {class: 'tab', type: 'button', 'data-tab': key}, name);
+      b.addEventListener('click', () => { STATE.tab = key; show(); }); return b; });
+    body.append(el('div', {class: 'tabs', role: 'tablist'}, ...buttons), pane);
+    const show = () => {
+      for (const b of buttons) b.className = 'tab' + (b.getAttribute('data-tab') === STATE.tab ? ' on' : '');
+      pane.replaceChildren();
+      if (STATE.tab === 'changes') drawChanges(pane, v, label);
+      else if (STATE.tab === 'prep') drawPrep(pane, v, df, dv, label);
+      else drawAll(pane, v);
+    };
+    show();
   };
   sel.addEventListener('change', () => draw(sel.value)); draw(V.latest);
+}
+
+// 탭·필터 상태는 버전을 바꿔도 유지한다
+const STATE = {tab: 'prep', q: '', level: '', scope: ''};
+const LEVEL_CLASS = {'상': 'bad', '중': 'note', '하': 'ok'};
+const noteSpan = n => el('span', {class: 'note'}, n ? '[내부 메모] ' + n : '');
+
+function filterBar(pane, opts, redraw) {
+  const q = el('input', {type: 'search', placeholder: 'ID·제목 검색', 'aria-label': 'ID·제목 검색'}); q.value = STATE.q;
+  q.addEventListener('input', () => { STATE.q = q.value; redraw(); });
+  const kids = [q];
+  if (opts.level) {
+    const s = el('select', {'aria-label': '난이도'}, ...[['', '난이도 전체'], ['상', '상'], ['중', '중'], ['하', '하']]
+      .map(([val, t]) => el('option', {value: val}, t)));
+    s.value = STATE.level; s.addEventListener('change', () => { STATE.level = s.value; redraw(); }); kids.push(s);
+  }
+  const sc = el('select', {'aria-label': '범위'}, ...[['', '범위 전체'], ['회사 차원', '회사 차원'], ['고객 사례 4건', '고객 사례 4건']]
+    .map(([val, t]) => el('option', {value: val}, t)));
+  sc.value = STATE.scope; sc.addEventListener('change', () => { STATE.scope = sc.value; redraw(); }); kids.push(sc);
+  const count = el('span', {class: 'muted'});
+  pane.append(el('div', {class: 'row'}, ...kids, count));
+  return count;
+}
+const matchQ = (r) => { const q = STATE.q.trim().toLowerCase(); return !q || r.id.toLowerCase().includes(q) || r.title.toLowerCase().includes(q); };
+
+function drawChanges(pane, v, label) {
+  const d = v.diff;
+  if (!d) { pane.append(el('p', {class: 'muted'}, '첫 등록 버전이라 비교 대상이 없습니다.')); return; }
+  pane.append(el('p', {class: 'rule'}, `$${d.from} → $${label}. 실질 변경 = 의미가 바뀜, 경미(표기) = 대소문자·문장부호만, 경미(오타) = 철자만 (파이썬 규칙)`));
+  const rows = [
+    ...d.added.map(a => [el('span', {class: 'chip'}, '추가'), a.id, a.title, '', noteSpan(a.note)]),
+    ...d.removed.map(r => [el('span', {class: 'chip'}, '삭제'), r.id, r.title, '', '']),
+    ...d.changed.map(c => [el('span', {class: 'chip'}, TYPE[c.type] || c.type), c.id, c.title,
+      el('span', {class: 'chg'}, changesText(c.changes)), noteSpan(c.note)]),
+    ...d.sheet_notes.map(n => [el('span', {class: 'chip'}, '안내문 ' + (TYPE[n.type] || n.type)), '(시트 안내문)', n.sheet,
+      el('span', {class: 'chg'}, changesText(n.changes)), '']),
+  ];
+  pane.append(table(['구분', 'ID', '제목', '바뀐 부분', '내부 메모'], rows));
+}
+
+function drawPrep(pane, v, df, dv, label) {
+  if (!df && !dv) { pane.append(el('p', {class: 'muted'}, '데이터 없음 (난이도·산출물)')); return; }
+  pane.append(el('p', {class: 'rule'}, '난이도 점수: 미준비 +2 · 일부 +1 · 고객 사례 4건 증빙 항목 +1 · 이번 버전 신규 +1 → 0~1점 하, 2점 중, 3~4점 상. '
+    + '준비 상태는 data/sample/readiness.csv(가상 데이터), 산출물은 색인할 때 원문에서 한 번 추출한 결과(근거 문장 원문 대조)입니다.'));
+  if (!df) pane.append(el('p', {class: 'muted'}, '난이도 데이터 없음' + (v.difficulty && v.difficulty.error ? ' (' + v.difficulty.error + ')' : '')));
+  if (!dv) pane.append(el('p', {class: 'muted'}, '산출물 데이터 없음' + (v.deliverables && v.deliverables.error ? ' (' + v.deliverables.error + ')' : '')));
+  const byDiff = Object.fromEntries((df ? df.items : []).map(i => [i.id, i]));
+  const byDel = Object.fromEntries((dv ? dv.items : []).map(i => [i.id, i]));
+  const rowsAll = v.requirements.map(r => ({...r, d: byDiff[r.id], x: byDel[r.id]}))
+    .sort((a, b) => ((b.d ? b.d.score : -1) - (a.d ? a.d.score : -1)) || a.id.localeCompare(b.id));
+  const count = filterBar(pane, {level: !!df}, () => redraw());
+  const holder = el('div'); pane.append(holder);
+  const redraw = () => {
+    const rows = rowsAll.filter(r => matchQ(r) && (!STATE.scope || r.scope === STATE.scope)
+      && (!STATE.level || (r.d && r.d.level === STATE.level)));
+    count.textContent = `$${rows.length}개 표시 / 전체 $${rowsAll.length}개`;
+    holder.replaceChildren(table(['난이도', '점수', 'ID', '제목', '준비 상태', '준비 범위', '산출물 체크리스트', '점수 근거'], rows.map(r => [
+      r.d ? el('span', {class: LEVEL_CLASS[r.d.level] || ''}, r.d.level) : '-', r.d ? String(r.d.score) : '-', r.id, r.title,
+      r.d ? r.d.readiness : '-', r.x ? r.x.cases : '-',
+      el('span', {class: 'chg'}, r.x ? r.x.deliverables.map(n => '☐ ' + n).join('\n') : '-'),
+      el('span', {class: 'chg'}, r.d ? r.d.reasons.join('\n') : '-')])));
+  };
+  redraw();
+}
+
+function drawAll(pane, v) {
+  const count = filterBar(pane, {level: false}, () => redraw());
+  const holder = el('div'); pane.append(holder);
+  const redraw = () => {
+    const rows = v.requirements.filter(r => matchQ(r) && (!STATE.scope || r.scope === STATE.scope));
+    count.textContent = `$${rows.length}개 표시 / 전체 $${v.requirements.length}개`;
+    holder.replaceChildren(table(['ID', '제목', '시트', '영역', '범위', '내부 메모'],
+      rows.map(r => [r.id, r.title, r.sheet, r.area, r.scope, el('span', {class: 'note'}, r.note)])));
+  };
+  redraw();
 }
 
 function renderCerts() {
@@ -251,9 +318,11 @@ function renderCerts() {
 }
 
 function renderEval() {
-  const box = document.getElementById('eval'); box.replaceChildren(el('h2', {}, '③ 자체 평가 결과'));
+  const box = document.getElementById('eval'); box.replaceChildren();
   const E = D.eval; if (!E) { box.append(el('p', {class: 'muted'}, '데이터 없음 (python -m evaluation.run_eval --round N)')); return; }
   const s = E.summary;
+  document.getElementById('evalsum').textContent =
+    `③ 자체 평가 결과 · 라운드 $${E.round} · $${s.passed}/$${s.total} 통과 · judge $${fmt(s.judge_mean_score)} (눌러서 펼치기)`;
   box.append(el('p', {class: 'muted'}, `최신 라운드 $${E.round} · $${E.run_at || ''} · $${(E.model || {}).chat || ''}`));
   box.append(el('div', {class: 'kpis'}, kpi(`$${s.passed}/$${s.total}`, '규칙 판정 통과'), kpi(fmt(s.judge_mean_score), 'LLM judge 평균(1~5)'),
     ...Object.entries(s.ragas_mean || {}).map(([m, v]) => kpi(fmt(v), m))));

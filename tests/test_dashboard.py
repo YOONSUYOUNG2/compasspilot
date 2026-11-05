@@ -46,6 +46,13 @@ class TestDashboard(unittest.TestCase):
         mob = next(i for i in dv["items"] if i["id"] == "MOB-004")
         self.assertEqual(mob["cases"], "고객 사례 4건 중 2건 이상")
 
+    def test_layout_tabs_filters_and_folded_eval(self):  # 탭 3개, 검색·필터, 평가 결과는 접힌 상태
+        for key in ("'changes'", "'prep'", "'all'"):
+            self.assertIn(key, self.html)
+        self.assertIn('type: \'search\'', self.html)
+        self.assertRegex(self.html, r'<details class="sec"><summary id="evalsum">')
+        self.assertNotRegex(self.html, r'<details class="sec" open')
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 
