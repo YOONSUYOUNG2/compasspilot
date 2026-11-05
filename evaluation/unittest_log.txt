@@ -1,6 +1,6 @@
 # CompassPilot unittest 실행 기록
 # 실행: python -m unittest discover -s tests -v
-# 일시: 2026-11-05 15:20 (KST), Python 3.14.8, 커밋 2d65399
+# 일시: 2026-11-05 17:53 (KST), Python 3.14.8, 커밋 f96d8d7
 # 실제 Assessment Excel(data/private, git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 Excel이 필요한 테스트가 skip된다.
 
 test_already_has_phrase (test_answer_rules.TestNotCoveredPhrase.test_already_has_phrase) ... ok
@@ -16,11 +16,28 @@ test_real_refusal_is_kept (test_answer_rules.TestRepairReason.test_real_refusal_
 test_refusal_but_tool_gave_roster (test_answer_rules.TestRepairReason.test_refusal_but_tool_gave_roster) ... ok
 test_kept_with_diff_versions (test_answer_rules.TestStripNotes.test_kept_with_diff_versions) ... ok
 test_removed_without_note_tool (test_answer_rules.TestStripNotes.test_removed_without_note_tool) ... ok
+test_gaps (test_benchmark.TestRules.test_gaps) ... ok
+test_next_tier_and_top_tier (test_benchmark.TestRules.test_next_tier_and_top_tier) ... ok
+test_no_projection_without_in_progress (test_benchmark.TestRules.test_no_projection_without_in_progress) ... ok
+test_projection (test_benchmark.TestRules.test_projection) ... ok
+test_rank_of_excludes_self (test_benchmark.TestRules.test_rank_of_excludes_self) ... ok
+test_tier_beats_metrics (test_benchmark.TestRules.test_tier_beats_metrics) ... ok
+test_ties_share_rank (test_benchmark.TestRules.test_ties_share_rank) ... ok
+test_anonymous_names_only (test_benchmark.TestSampleData.test_anonymous_names_only) ... ok
+test_invalid_files (test_benchmark.TestSampleData.test_invalid_files) ... ok
+test_our_display_name_from_private_file (test_benchmark.TestSampleData.test_our_display_name_from_private_file) ... ok
+test_sample (test_benchmark.TestSampleData.test_sample) ... ok
+test_benchmark_section (test_dashboard.TestDashboard.test_benchmark_section) ... ok
+test_cert_targets_section (test_dashboard.TestDashboard.test_cert_targets_section) ... ok
 test_deliverables_section (test_dashboard.TestDashboard.test_deliverables_section) ... ok
 test_diff_counts_match_answer_table (test_dashboard.TestDashboard.test_diff_counts_match_answer_table) ... ok
 test_difficulty_section (test_dashboard.TestDashboard.test_difficulty_section) ... ok
+test_layout_sheets_tabs_filters (test_dashboard.TestDashboard.test_layout_sheets_tabs_filters) ... ok
 test_no_employee_names (test_dashboard.TestDashboard.test_no_employee_names) ... ok
+test_original_text_and_short_reasons (test_dashboard.TestDashboard.test_original_text_and_short_reasons) ... ok
 test_self_contained (test_dashboard.TestDashboard.test_self_contained) ... ok
+test_summary_csv_print_present (test_dashboard.TestDashboard.test_summary_csv_print_present) ... ok
+test_templates_linked (test_dashboard.TestDashboard.test_templates_linked) ... ok
 test_version_dropdown_data (test_dashboard.TestDashboard.test_version_dropdown_data) ... ok
 test_script_tag_in_data_is_escaped (test_dashboard.TestRenderEscaping.test_script_tag_in_data_is_escaped) ... ok
 test_missing_file_message (test_deliverables.TestLookup.test_missing_file_message) ... ok
@@ -94,6 +111,19 @@ test_split_removes_notes_from_english (test_report.TestReportRules.test_split_re
 test_topic_slug (test_report.TestReportRules.test_topic_slug) ... ok
 test_files_written (test_report.TestSaveReport.test_files_written) ... ok
 test_same_day_same_topic_not_overwritten (test_report.TestSaveReport.test_same_day_same_topic_not_overwritten) ... ok
+test_no_names_in_result (test_targets.TestSampleData.test_no_names_in_result) ... ok
+test_sample_numbers (test_targets.TestSampleData.test_sample_numbers) ... ok
+test_by_org_levels (test_targets.TestTargetRules.test_by_org_levels) ... ok
+test_by_person (test_targets.TestTargetRules.test_by_person) ... ok
+test_by_vendor (test_targets.TestTargetRules.test_by_vendor) ... ok
+test_checks (test_targets.TestTargetRules.test_checks) ... ok
+test_empty_requirement_ids_means_any (test_templates.TestMatchRules.test_empty_requirement_ids_means_any) ... ok
+test_first_match_wins (test_templates.TestMatchRules.test_first_match_wins) ... ok
+test_keyword_and_requirement (test_templates.TestMatchRules.test_keyword_and_requirement) ... ok
+test_missing_file_is_skipped (test_templates.TestMatchRules.test_missing_file_is_skipped) ... ok
+test_all_listed_files_exist (test_templates.TestSampleTemplates.test_all_listed_files_exist) ... ok
+test_embedded_roundtrip_and_no_names (test_templates.TestSampleTemplates.test_embedded_roundtrip_and_no_names) ... ok
+test_missing_index_is_empty (test_templates.TestSampleTemplates.test_missing_index_is_empty) ... ok
 test_other_division (test_workforce.TestRefusals.test_other_division) ... ok
 test_other_group (test_workforce.TestRefusals.test_other_group) ... ok
 test_other_team (test_workforce.TestRefusals.test_other_team) ... ok
@@ -111,6 +141,6 @@ test_user_from_config (test_workforce.TestTools.test_user_from_config) ... ok
 test_user_id_not_an_argument (test_workforce.TestTools.test_user_id_not_an_argument) ... ok
 
 ----------------------------------------------------------------------
-Ran 105 tests in 18.360s
+Ran 135 tests in 18.058s
 
 OK

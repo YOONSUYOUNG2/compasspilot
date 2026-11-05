@@ -67,7 +67,7 @@ copy .env.example .env        # AWS 액세스 키 입력 (Bedrock: Sonnet 4.5, H
 | LLM judge 평균 | **4.89 / 5** |
 | faithfulness · answer relevancy · context precision · context recall | 0.981 · 0.768 · 0.887 · 0.991 |
 | 성공 기준 S3(검색 출처 9/9) · S4(기능 22/22) · S5(안전 10/10) · S6(지어낸 답 0) · S11(faithfulness ≥ 0.8) | 모두 충족 |
-| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드 등) | 123개 통과 |
+| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드, 자격 대상 실적, 산출물 양식, 현주소 비교 등) | 135개 통과 |
 
 - 라운드별 실패 원인과 개선 내용은 `evaluation/round0_report.md` ~ [round12_report.md](evaluation/round12_report.md)에 있습니다.
 - 개선 사례: 평가 측정 오류 수정, Supervisor가 맞는 답을 망가뜨리는 문제를 코드 검증으로 차단, 동시 실행 충돌 수정, LLM이 개수를 잘못 세는 문제를 파이썬 집계로 대체.
