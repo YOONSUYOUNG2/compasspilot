@@ -5,6 +5,7 @@
 import argparse
 import asyncio
 import logging
+import re
 import sys
 import time
 import warnings
@@ -64,6 +65,21 @@ def repair_reason(answer: str, report: str, tool_outputs: list[tuple[str, str]])
     return None
 
 
+# '문서에 없음'을 풀어 쓴 영문 표현(라운드 10 #10). 지난 라운드 답변 전체에 돌려 정상 답변은 걸리지 않음을 확인했다.
+NOT_COVERED_PARAPHRASE = re.compile(
+    r"\b(no (information|mention|details?|data) (about|on|regarding|related to|for|of)"
+    r"|not (covered|mentioned|addressed|specified|found) in the (assessment|documents?|requirements?)"
+    r"|(does|do) not (cover|address|mention|contain|include) (any )?(information|details?|requirements?)"
+    r" (about|on|regarding|for))", re.I)
+
+
+def ensure_not_covered_phrase(answer: str) -> str:
+    """영문 답이 '문서에 없음'을 풀어 썼는데 고정 문구가 빠졌으면 맨 앞에 고정 문구를 붙인다(판정 신호 일치)."""
+    if config.NOT_IN_DOCUMENT in answer or not NOT_COVERED_PARAPHRASE.search(english_part(answer)):
+        return answer
+    return f"{config.NOT_IN_DOCUMENT}\n\n{answer.lstrip()}"
+
+
 def strip_unsupported_notes(answer: str, tools_used: list[str]) -> str:
     """[내부 메모]는 도구가 돌려준 internal_note에만 쓴다. 메모를 주는 도구를 쓰지 않았으면 그 줄을 지운다."""
     if NOTE_SOURCE_TOOLS & set(tools_used):
@@ -99,6 +115,7 @@ async def ask(app, question: str, user_id: str = DEFAULT_USER, callbacks=None) -
         tracer.repaired(reason)
         answer = await format_report(report)
     answer = strip_unsupported_notes(answer, tracer.tools_used)
+    answer = ensure_not_covered_phrase(answer)
     if get_user(user_id)["role"] == "staff":
         answer = mask_text(answer)  # 일반 권한 답변은 출력 직전 이름 마스킹
     tracer.answer(answer, time.time() - start)

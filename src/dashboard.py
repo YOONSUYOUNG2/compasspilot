@@ -16,7 +16,7 @@ from collections import Counter
 from string import Template
 
 from src import config
-from src.assessment import diff, difficulty, parser
+from src.assessment import deliverables, diff, difficulty, parser
 from src.assessment.readiness import LABEL_KO
 
 OUT_PATH = config.REPORTS_DIR / "dashboard.html"
@@ -48,6 +48,7 @@ def version_data() -> dict:
                                 for n in d["sheet_notes_changed"]],
             }
         entry["difficulty"] = difficulty_data(label)
+        entry["deliverables"] = deliverables_data(label)
         versions[label] = entry
     return {"labels": labels, "latest": labels[-1] if labels else None, "versions": versions}
 
@@ -62,6 +63,28 @@ def difficulty_data(label: str) -> dict:
     return {"counts": r["counts"],
             "items": [{"id": i["id"], "title": i["title"], "level": i["level_ko"], "score": i["score"],
                        "readiness": LABEL_KO[i["readiness"]], "reasons": i["reasons"]} for i in items]}
+
+
+def deliverables_data(label: str) -> dict:
+    """버전의 산출물 체크리스트 (2단계 ④). 미리 추출한 파일만 읽는다(LLM 호출 없음)."""
+    try:
+        r = deliverables.lookup(version=label)
+    except Exception as e:  # noqa: BLE001 — 파일 문제는 화면에 '데이터 없음'으로 보여 준다
+        return {"error": f"{type(e).__name__}: {e}"}
+    if "error" in r:
+        return {"error": r["error"]}
+
+    def cases(n):
+        if not n:
+            return "회사 차원 (1회)"
+        return "고객 사례 4건 모두" if n >= deliverables.CASES_TOTAL else f"고객 사례 4건 중 {n}건 이상"
+
+    items = [{"id": i["id"], "title": i["title"], "cases": cases(i["customer_examples_required"]),
+              "deliverables": [d["name"] for d in i["deliverables"]]} for i in r["items"]]
+    return {"total": sum(len(i["deliverables"]) for i in items),
+            "company": sum(1 for i in r["items"] if not i["customer_examples_required"]),
+            "customer": sum(1 for i in r["items"] if i["customer_examples_required"]),
+            "items": items}
 
 
 def certification_data() -> dict | None:
@@ -112,7 +135,7 @@ def evaluation_data() -> dict | None:
 
 def build_data() -> dict:
     return {"versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
-            "not_implemented": ["산출물 체크리스트 (2단계 ④)"]}
+            "not_implemented": []}
 
 
 # ── HTML ──────────────────────────────────────────────────────────────────
@@ -134,7 +157,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px
 th{color:var(--muted);font-weight:600;white-space:nowrap}
 .chip{display:inline-block;background:var(--chip);border-radius:10px;padding:0 8px;font-size:12px;white-space:nowrap}
 .ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.muted{color:var(--muted)}
-.note{color:var(--warn);font-size:12px;white-space:pre-line}.chg{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.note{color:var(--warn);font-size:12px;white-space:pre-line}.chg{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-line}
 select{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .bar{height:8px;background:var(--accent);border-radius:4px}
@@ -199,6 +222,15 @@ function renderVersions() {
         [el('span', {class: i.level === '상' ? 'bad' : (i.level === '중' ? 'note' : 'ok')}, i.level), String(i.score), i.id, i.title,
          i.readiness, el('span', {class: 'chg'}, i.reasons.join(' / '))])));
     }
+    const dv = v.deliverables;
+    body.append(el('h3', {}, `$${label} 판 산출물 체크리스트`));
+    if (!dv || dv.error) { body.append(el('p', {class: 'muted'}, '데이터 없음' + (dv && dv.error ? ' (' + dv.error + ')' : ''))); }
+    else {
+      body.append(el('div', {class: 'kpis'}, kpi(dv.total, '산출물'), kpi(dv.company, '회사 차원 항목'), kpi(dv.customer, '고객 사례 항목')));
+      body.append(el('p', {class: 'muted'}, '색인할 때 원문에서 한 번 추출한 결과입니다(근거 문장은 원문 대조로 확인). 프로젝트 착수 전에 고객 사례별로 챙길 목록입니다.'));
+      body.append(table(['ID', '제목', '준비 범위', '산출물'], dv.items.map(i =>
+        [i.id, i.title, i.cases, el('span', {class: 'chg'}, i.deliverables.map(n => '☐ ' + n).join('\n'))])));
+    }
     body.append(el('h3', {}, `$${label} 판 요구사항 $${v.total}개`));
     body.append(table(['ID', '제목', '시트', '영역', '범위', '내부 메모'],
       v.requirements.map(r => [r.id, r.title, r.sheet, r.area, r.scope, el('span', {class: 'note'}, r.note)])));
@@ -235,7 +267,9 @@ function renderEval() {
 }
 
 function renderTodo() {
-  const box = document.getElementById('todo'); box.replaceChildren(el('h2', {}, '④ 준비 중'));
+  const box = document.getElementById('todo');
+  if (!D.not_implemented.length) { box.remove ? box.remove() : box.replaceChildren(); return; }
+  box.replaceChildren(el('h2', {}, '④ 준비 중'));
   box.append(el('p', {class: 'muted'}, '미구현: ' + D.not_implemented.join(', ')));
 }
 renderVersions(); renderCerts(); renderEval(); renderTodo();

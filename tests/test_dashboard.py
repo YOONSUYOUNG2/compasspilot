@@ -38,6 +38,14 @@ class TestDashboard(unittest.TestCase):
         self.assertEqual(df["items"][0]["level"], "상")
         self.assertNotIn("난이도 (2단계 ③)", self.data["not_implemented"])
 
+    def test_deliverables_section(self):  # 2단계 ④: 추출 파일이 있으면 55개 항목, 없으면 '데이터 없음'
+        dv = self.data["versions"]["versions"]["2026-08"]["deliverables"]
+        if "error" in dv:
+            self.skipTest("산출물 추출 결과 없음")
+        self.assertEqual(len(dv["items"]), 55)
+        mob = next(i for i in dv["items"] if i["id"] == "MOB-004")
+        self.assertEqual(mob["cases"], "고객 사례 4건 중 2건 이상")
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 

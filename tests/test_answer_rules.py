@@ -11,7 +11,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from src import config
-    from src.main import last_agent_report, repair_reason, strip_unsupported_notes
+    from src.main import ensure_not_covered_phrase, last_agent_report, repair_reason, strip_unsupported_notes
 
 ANSWER = "English answer [ID: POV-007]\n\n### 한국어 번역\n번역\n[내부 메모] POV-007: 메모"
 ROSTER = '{"viewer_role": "인사팀", "count": 2, "holders": []}'
@@ -25,6 +25,27 @@ class TestStripNotes(unittest.TestCase):
 
     def test_kept_with_diff_versions(self):
         self.assertEqual(strip_unsupported_notes(ANSWER, ["diff_versions"]), ANSWER)
+
+
+class TestNotCoveredPhrase(unittest.TestCase):
+    def test_paraphrase_gets_fixed_phrase(self):  # 라운드 10 #10
+        ans = "There is no information about application fees in the requirements.\n\n### 한국어 번역\n정보가 없습니다."
+        out = ensure_not_covered_phrase(ans)
+        self.assertTrue(out.startswith(config.NOT_IN_DOCUMENT))
+        self.assertIn("no information about", out)
+
+    def test_already_has_phrase(self):
+        ans = f"{config.NOT_IN_DOCUMENT}\n\n### 한국어 번역\n없습니다."
+        self.assertEqual(ensure_not_covered_phrase(ans), ans)
+
+    def test_normal_answer_untouched(self):
+        self.assertEqual(ensure_not_covered_phrase(ANSWER), ANSWER)
+        ans = "PRJ-007 requires load testing; it does not require a specific tool. [ID: PRJ-007]\n\n### 한국어 번역\n번역"
+        self.assertEqual(ensure_not_covered_phrase(ans), ans)
+
+    def test_korean_section_ignored(self):  # 한국어 번역 부분의 표현은 보지 않는다
+        ans = "English answer [ID: POV-007]\n\n### 한국어 번역\nno information about this"
+        self.assertEqual(ensure_not_covered_phrase(ans), ans)
 
 
 class TestRepairReason(unittest.TestCase):

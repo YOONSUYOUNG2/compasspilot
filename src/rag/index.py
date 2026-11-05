@@ -60,3 +60,6 @@ if __name__ == "__main__":
     for label, n in build_index().items():
         print(f"indexed {label}: {n} requirements")
     print(f"-> {config.CHROMA_DIR} (collection: {COLLECTION})")
+    # 2단계 ④: 산출물 사전 추출(원문이 바뀐 항목만 LLM으로 추출, 나머지는 재사용)
+    from src.assessment.deliverables import DELIVERABLES_PATH, build_deliverables
+    print(f"deliverables {build_deliverables()} -> {DELIVERABLES_PATH}")

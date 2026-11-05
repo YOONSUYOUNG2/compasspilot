@@ -93,8 +93,10 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 파싱·색인 (새 버전 Excel을 data/private/versions/에 넣었을 때). 산출물 추출은 2단계 ④에서 이 명령에 붙인다
+# 파싱·색인 + 산출물 추출 (새 버전 Excel을 data/private/versions/에 넣었을 때). 원문이 바뀐 항목만 LLM으로 추출한다
 python -m src.rag.index
+# 산출물 추출만 다시 (--force: 전부 다시 추출)
+python -m src.assessment.deliverables
 
 # 질문 실행 (--user 생략 시 staff)
 python -m src.main --user <user_id> "질문"
@@ -157,6 +159,7 @@ python -m evaluation.run_eval --round 1
 - **최종 답 검증(코드)**: Supervisor 최종 답이 도구 결과와 어긋나면 `main.repair_reason`(파이썬 규칙)이 찾아내고, 하위 에이전트 보고를 `agents.format_report`(번역·형식만 LLM)로 다시 쓴다. trace에 `answer_repaired`를 남긴다(라운드 3~5에서 도입).
   - "권한 없음"인데 권한 도구는 명단을 줬을 때 / "문서에 없음"인데 하위 에이전트가 [ID] 근거를 보고했을 때 / 영문 부분이 비었을 때
 - `[내부 메모]` 줄은 메모를 돌려주는 도구(`diff_versions`)를 쓴 답변에만 남기고, 그 외에는 코드로 지운다.
+- 영문 답이 "문서에 없음"을 풀어 쓰고 고정 문구를 빠뜨리면 `main.ensure_not_covered_phrase`가 고정 문구를 맨 앞에 붙인다(라운드 10에서 도입, 지난 라운드 답변 전체로 오탐 0건 확인).
 
 ## 6. 테스트·평가
 

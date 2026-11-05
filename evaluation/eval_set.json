@@ -64,5 +64,13 @@
   {"id": 29, "type": "multi_tool", "question": "신규 추가 항목들의 난이도를 정리해줘",
    "expected_tools": ["diff_versions", "assess_difficulty"],
    "expected_source": ["POV-006", "POV-007", "POV-008", "PRJ-006", "PRJ-007", "CSN-003", "ARA-001", "ARA-002"],
-   "reference": "The eight requirements added in 2026-08 are rated as follows. High (score 3: not ready +2, new +1): POV-007, PRJ-007, ARA-001, ARA-002. Medium (score 2: partially ready +1, new +1): POV-006, POV-008, PRJ-006, CSN-003."}
+   "reference": "The eight requirements added in 2026-08 are rated as follows. High (score 3: not ready +2, new +1): POV-007, PRJ-007, ARA-001, ARA-002. Medium (score 2: partially ready +1, new +1): POV-006, POV-008, PRJ-006, CSN-003."},
+  {"id": 30, "type": "single_tool", "question": "MOB-004에 필요한 산출물 알려줘",
+   "expected_tools": ["list_deliverables"],
+   "expected_source": ["MOB-004"],
+   "reference": "MOB-004 (Landing Zone) requires the following evidence for at least 2 of the 4 customer examples: diagrams with the AWS multi-account structure; diagrams with the VPCs, networking connectivity and data flow including connectivity with source or external environments (VPN, Direct Connect or Public Internet); and the process or outputs/reports of tools used to create and maintain the landing zone (AWS Control Tower, AWS CloudFormation, scripts or third-party Infrastructure as Code tools)."},
+  {"id": 31, "type": "multi_tool", "question": "이번에 바뀐 항목들에 필요한 산출물 알려줘",
+   "expected_tools": ["diff_versions", "list_deliverables"],
+   "expected_source": ["POV-001", "PS-001", "PS-004", "REL-002"],
+   "reference": "Four requirements changed in 2026-08. POV-001 (company-level): a company overview presentation in PPT or PDF format attached to the application, about 15 slides. PS-001 (each of the 4 customer examples): an architecture diagram, a technical solution description referencing the diagram, a justification of the AWS services and regions used, and a description of integration points. PS-004 (each customer example): the ACE opportunity ID and the AWS account ID, if available. REL-002 (one of the submitted customer examples): descriptions or documents showing the workload resilience guidance meets the three defined criteria, and a description of how resilience is implemented in one submitted customer example, including reasons for exception when RTO and RPO are not defined."}
 ]

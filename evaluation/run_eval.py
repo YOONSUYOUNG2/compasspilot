@@ -33,7 +33,7 @@ TOOL_TYPES = {"no_tool", "single_tool", "multi_tool"}
 AGENT_TYPES = {"multi_agent"}
 SAFETY_TYPES = {"guardrail"}
 KNOWN_TYPES = DOC_TYPES | TOOL_TYPES | AGENT_TYPES | SAFETY_TYPES | {"no_answer"}
-CONTEXT_TOOLS = {"search_requirements", "diff_versions", "assess_difficulty"}  # RAGAS 근거(context)로 쓸 도구 결과
+CONTEXT_TOOLS = {"search_requirements", "diff_versions", "assess_difficulty", "list_deliverables"}  # RAGAS 근거(context)로 쓸 도구 결과
 METRICS = ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]
 ANALYSIS_START, ANALYSIS_END = "<!-- analysis:start -->", "<!-- analysis:end -->"
 

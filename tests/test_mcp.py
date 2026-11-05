@@ -5,6 +5,7 @@ import unittest
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from src.assessment.deliverables import DELIVERABLES_PATH
 from src.assessment.parser import excel_files
 from src.mcp_server import MCP_SERVER_CONFIG
 
@@ -29,7 +30,7 @@ def _text(result) -> str:
 class TestMcpServer(unittest.TestCase):
     def test_tools_and_default_diff(self):
         names, result = asyncio.run(_call({}))
-        self.assertEqual(names, ["assess_difficulty", "diff_versions"])
+        self.assertEqual(names, ["assess_difficulty", "diff_versions", "list_deliverables"])
         data = json.loads(_text(result))
         self.assertEqual(data["counts"]["added"], 8)
         self.assertEqual((data["from_version"], data["to_version"]), ("2025-08", "2026-08"))
@@ -42,6 +43,13 @@ class TestMcpServer(unittest.TestCase):
         _, result = asyncio.run(_call({"requirement_ids": "POV-007, MOB-004"}, "assess_difficulty"))
         items = {i["id"]: (i["score"], i["level"]) for i in json.loads(_text(result))["items"]}
         self.assertEqual(items, {"POV-007": (3, "high"), "MOB-004": (2, "medium")})
+
+    @unittest.skipUnless(DELIVERABLES_PATH.exists(), "산출물 추출 결과가 없어 건너뜀 (python -m src.assessment.deliverables)")
+    def test_list_deliverables(self):
+        _, result = asyncio.run(_call({"requirement_ids": "MOB-004"}, "list_deliverables"))
+        item = json.loads(_text(result))["items"][0]
+        self.assertEqual((item["id"], item["customer_examples_required"]), ("MOB-004", 2))
+        self.assertTrue(item["deliverables"])
 
 
 if __name__ == "__main__":

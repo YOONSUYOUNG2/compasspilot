@@ -39,8 +39,8 @@
 - [x] **T15 ③ 난이도**: 준비 상태 가상 데이터 + `assess_difficulty` + 테스트 + 평가 28~29번 (1h)
   - 확인: unittest 규칙 100% 일치 (S9). 대시보드 난이도 칸 추가
   - 메모(11/5 13:10): Sonnet 하루 토큰 한도 소진(us-west-2·us-east-1·4.6, global도 간헐 실패)으로 28~29번 에이전트 실행은 한도가 풀린 뒤(11/6 오전) 라운드 평가에서 함께 돌린다
-- [ ] **T16 ④ 산출물**: 추출 + `list_deliverables` + 평가 30~31번 (1h)
-  - 확인: `data/derived/deliverables.json` 생성, "MOB-004에 필요한 산출물 알려줘" 응답
+- [x] **T16 ④ 산출물**: 추출 + `list_deliverables` + 평가 30~31번 (1h)
+  - 확인: `data/derived/deliverables.json` 생성, "MOB-004에 필요한 산출물 알려줘" 응답. 대시보드 산출물 체크리스트 칸 추가. 라운드 9~11 평가(31/31)
 - [ ] **T17 ⑤ 보고서** 저장 + 평가 32번 (0.5h)
   - 확인: `reports/*_en.md`, `*_ko.md` 생성, 영문본에 내부 메모 없음
 

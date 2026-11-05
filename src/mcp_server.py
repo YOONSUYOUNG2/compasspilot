@@ -3,7 +3,7 @@
 노출하는 도구:
   - diff_versions(from_version, to_version)         Assessment 버전 간 변경 내역 (1단계)
   - assess_difficulty(requirement_ids, version)     준비 난이도와 점수 근거 (2단계 ③)
-2단계 ④에서 list_deliverables를 추가한다.
+  - list_deliverables(requirement_ids, version)     필요 산출물과 고객 사례 체크리스트 (2단계 ④, 미리 추출한 파일만 읽음)
 
 계산은 src/assessment의 파이썬 규칙이 하고, 이 서버는 결과를 JSON으로 돌려주기만 한다.
 클라이언트(agents.py)가 자식 프로세스로 띄운다: python -m src.mcp_server
@@ -20,7 +20,7 @@ from fastmcp import FastMCP  # noqa: E402
 warnings.showwarning = _show
 
 from src import config
-from src.assessment import diff, difficulty, parser
+from src.assessment import deliverables, diff, difficulty, parser
 
 mcp = FastMCP("compasspilot")
 
@@ -92,6 +92,30 @@ def assess_difficulty(requirement_ids: str = "", version: str = "") -> str:
     ids = [i for i in requirement_ids.replace(" ", ",").split(",") if i.strip()]
     result = difficulty.assess(ids or None, version or None)
     return json.dumps(result, ensure_ascii=False)
+
+
+@mcp.tool()
+def list_deliverables(requirement_ids: str = "", version: str = "") -> str:
+    """Requirement별로 제출해야 할 산출물(증빙 자료)과 고객 사례 4건 체크리스트를 보여 준다.
+
+    언제 쓰나: "MOB-004에 필요한 산출물", "무엇을 제출/준비해야 하나(증빙 자료 목록)", "고객 사례별 준비 체크리스트".
+      신규·변경 항목의 산출물은 diff_versions로 ID를 먼저 얻고 그 ID를 넣는다.
+    쓰지 않는 경우: 요구사항의 의미·조건 설명(→ search_requirements), 버전 간 변경 내역(→ diff_versions),
+      난이도(→ assess_difficulty).
+
+    산출물은 색인할 때 원문에서 미리 추출해 둔 결과다(이 도구는 LLM을 호출하지 않는다). 목록을 지어내거나 더하지 말고 그대로 보고한다.
+    결과(JSON): version, items[{id, title, scope, checklist, customer_examples_required, deliverables[{name, description}]}], unknown_ids
+      customer_examples_required: 고객 사례 4건 중 몇 건에 준비해야 하는지 (회사 차원 항목은 null)
+
+    Args:
+        requirement_ids: 쉼표로 구분한 ID (예: "MOB-004,PS-001"). 비우면 해당 버전 전체.
+        version: 버전 (예: "2026-08"). 비우면 최신 버전.
+    """
+    versions = parser.list_versions()
+    if version and version not in versions:
+        return json.dumps({"error": f"Unknown version '{version}'", "registered_versions": versions})
+    ids = [i for i in requirement_ids.replace(" ", ",").split(",") if i.strip()]
+    return json.dumps(deliverables.lookup(ids or None, version or None), ensure_ascii=False)
 
 
 if __name__ == "__main__":
