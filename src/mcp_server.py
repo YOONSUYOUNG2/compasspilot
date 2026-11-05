@@ -1,8 +1,9 @@
 """CompassPilot MCP 서버 (fastmcp, stdio).
 
-노출하는 도구 (1단계):
-  - diff_versions(from_version, to_version)   Assessment 버전 간 변경 내역
-2단계에서 assess_difficulty, list_deliverables를 추가한다.
+노출하는 도구:
+  - diff_versions(from_version, to_version)         Assessment 버전 간 변경 내역 (1단계)
+  - assess_difficulty(requirement_ids, version)     준비 난이도와 점수 근거 (2단계 ③)
+2단계 ④에서 list_deliverables를 추가한다.
 
 계산은 src/assessment의 파이썬 규칙이 하고, 이 서버는 결과를 JSON으로 돌려주기만 한다.
 클라이언트(agents.py)가 자식 프로세스로 띄운다: python -m src.mcp_server
@@ -19,7 +20,7 @@ from fastmcp import FastMCP  # noqa: E402
 warnings.showwarning = _show
 
 from src import config
-from src.assessment import diff, parser
+from src.assessment import diff, difficulty, parser
 
 mcp = FastMCP("compasspilot")
 
@@ -65,6 +66,31 @@ def diff_versions(from_version: str = "", to_version: str = "") -> str:
     except ValueError as e:
         return json.dumps({"error": str(e), "registered_versions": versions})
     result["registered_versions"] = versions
+    return json.dumps(result, ensure_ascii=False)
+
+
+@mcp.tool()
+def assess_difficulty(requirement_ids: str = "", version: str = "") -> str:
+    """Requirement의 준비 난이도(high/medium/low)와 점수 근거를 파이썬 규칙으로 판정한다.
+
+    언제 쓰나: "POV-007 난이도는?", "준비하기 어려운 항목", "신규 항목들의 난이도", "난이도 분포"처럼
+      준비 난이도·준비 상태를 묻는 질문. 신규·변경 항목의 난이도는 diff_versions로 ID를 먼저 얻고 그 ID를 넣는다.
+    쓰지 않는 경우: 요구사항 내용(→ search_requirements), 버전 간 변경 내역 자체(→ diff_versions).
+
+    점수 규칙: 준비 상태 not_ready +2 / partial +1 / ready 0, 고객 사례 4건 증빙 항목 +1, 이번 버전 신규 +1.
+      0~1점 low, 2점 medium, 3~4점 high. 직접 계산하지 말고 결과의 score·level·reasons를 그대로 보고한다.
+
+    결과(JSON): version, counts{high,medium,low}, items[{id, title, readiness, score, level, reasons}], unknown_ids
+
+    Args:
+        requirement_ids: 쉼표로 구분한 ID (예: "POV-007,PRJ-007"). 비우면 해당 버전 전체.
+        version: 버전 (예: "2026-08"). 비우면 최신 버전.
+    """
+    versions = parser.list_versions()
+    if version and version not in versions:
+        return json.dumps({"error": f"Unknown version '{version}'", "registered_versions": versions})
+    ids = [i for i in requirement_ids.replace(" ", ",").split(",") if i.strip()]
+    result = difficulty.assess(ids or None, version or None)
     return json.dumps(result, ensure_ascii=False)
 
 

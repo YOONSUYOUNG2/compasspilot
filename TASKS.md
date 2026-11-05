@@ -36,8 +36,9 @@
   - 확인: unittest + trace 검색에서 staff 이름 0건 (S8), 평가 재실행(다음 라운드 보고서)
 - [x] **T14 ② HTML 대시보드**(버전 드롭다운 포함) + 테스트 (1.5h)
   - 확인: `python -m src.dashboard` → `reports/dashboard.html`이 브라우저에서 열림, 변경 건수 정답 일치·이름 0건 (S10)
-- [ ] **T15 ③ 난이도**: 준비 상태 가상 데이터 + `assess_difficulty` + 테스트 + 평가 28~29번 (1h)
-  - 확인: unittest 규칙 100% 일치 (S9)
+- [x] **T15 ③ 난이도**: 준비 상태 가상 데이터 + `assess_difficulty` + 테스트 + 평가 28~29번 (1h)
+  - 확인: unittest 규칙 100% 일치 (S9). 대시보드 난이도 칸 추가
+  - 메모(11/5 13:10): Sonnet 하루 토큰 한도 소진(us-west-2·us-east-1·4.6, global도 간헐 실패)으로 28~29번 에이전트 실행은 한도가 풀린 뒤(11/6 오전) 라운드 평가에서 함께 돌린다
 - [ ] **T16 ④ 산출물**: 추출 + `list_deliverables` + 평가 30~31번 (1h)
   - 확인: `data/derived/deliverables.json` 생성, "MOB-004에 필요한 산출물 알려줘" 응답
 - [ ] **T17 ⑤ 보고서** 저장 + 평가 32번 (0.5h)

@@ -48,8 +48,12 @@ ASSESSMENT_PROMPT = f"""You are the requirement search specialist for the AWS Mi
   If the question also asks what changed, report only the requirement content; the version change is handled by another agent.
 """
 
-COMPETENCY_PROMPT = """You are the competency calculation specialist. You handle changes between assessment versions using diff_versions.
-- Always call diff_versions and base the report only on its JSON result. Never compute changes yourself.
+COMPETENCY_PROMPT = """You are the competency calculation specialist. You handle changes between assessment versions (diff_versions)
+and preparation difficulty (assess_difficulty).
+- For version changes, always call diff_versions and base the report only on its JSON result. Never compute changes yourself.
+- For difficulty / readiness questions, call assess_difficulty and report each item's level, score and reasons exactly as returned.
+  Never compute or adjust scores yourself. For difficulty of new/changed items, call diff_versions first to get the IDs,
+  then call assess_difficulty with those IDs (comma-separated).
 - change_type meaning: substantive = meaningful change, minor_notation = case/punctuation only, minor_typo = spelling fix only.
 - Report in English with requirement IDs as [ID: XXX-000], counts, and what changed.
 - Describe requirements ONLY from the AWS original fields (text, old_text, new_text, changes, title).
@@ -75,7 +79,7 @@ WORKFORCE_PROMPT = f"""You are the workforce certification specialist (employee 
 GENERAL_PROMPT = f"""You handle greetings, small talk, and questions about what this assistant can do.
 CompassPilot helps prepare the AWS Migration and Modernization Competency:
 (1) search assessment requirements with source IDs, (2) compare assessment versions (added / changed / minor changes / sheet guidance),
-(3) employee certification status for partner tier management (counts for everyone, name lists by permission).
+(3) rate preparation difficulty of requirements (high / medium / low with score reasons), (4) employee certification status for partner tier management (counts for everyone, name lists by permission).
 Answer briefly in English. Do not answer requirement content questions yourself.
 If you are asked for any factual information (fees, conditions, other vendors' programs, etc.), do not answer it;
 reply exactly: "{config.NOT_IN_DOCUMENT}" and then briefly say what you can help with.
@@ -87,6 +91,7 @@ SUPERVISOR_PROMPT = f"""You are the Supervisor of CompassPilot, an internal assi
   fees, programs, partner tiers, other vendors ("what does X require", "POV-001 내용") -> assessment_agent
   (it searches the assessment and says when something is not covered)
 - Changes between assessment versions (added, changed, typo, sheet guidance) -> competency_agent
+- Preparation difficulty / readiness of requirements (난이도, 준비 상태, 어려운 항목) -> competency_agent
 - Employee certifications (AWS/Google Cloud/OpenAI certification counts, holders, name lists, 자격증 보유 현황·명단) -> workforce_agent
 - ONLY greetings, small talk, and "what can you do" -> general_agent
 - If a question needs both, call assessment_agent and competency_agent in order.

@@ -16,7 +16,8 @@ from collections import Counter
 from string import Template
 
 from src import config
-from src.assessment import diff, parser
+from src.assessment import diff, difficulty, parser
+from src.assessment.readiness import LABEL_KO
 
 OUT_PATH = config.REPORTS_DIR / "dashboard.html"
 
@@ -46,8 +47,21 @@ def version_data() -> dict:
                 "sheet_notes": [{"sheet": n["sheet"], "type": n["change_type"], "changes": n.get("changes", [])}
                                 for n in d["sheet_notes_changed"]],
             }
+        entry["difficulty"] = difficulty_data(label)
         versions[label] = entry
     return {"labels": labels, "latest": labels[-1] if labels else None, "versions": versions}
+
+
+def difficulty_data(label: str) -> dict:
+    """버전의 난이도 분포와 항목별 점수 근거 (2단계 ③). 계산 오류가 나도 대시보드는 멈추지 않는다."""
+    try:
+        r = difficulty.assess(version=label)
+    except Exception as e:  # noqa: BLE001 — 입력 파일 문제는 화면에 '데이터 없음'으로 보여 준다
+        return {"error": f"{type(e).__name__}: {e}"}
+    items = sorted(r["items"], key=lambda i: (-i["score"], i["id"]))
+    return {"counts": r["counts"],
+            "items": [{"id": i["id"], "title": i["title"], "level": i["level_ko"], "score": i["score"],
+                       "readiness": LABEL_KO[i["readiness"]], "reasons": i["reasons"]} for i in items]}
 
 
 def certification_data() -> dict | None:
@@ -98,7 +112,7 @@ def evaluation_data() -> dict | None:
 
 def build_data() -> dict:
     return {"versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
-            "not_implemented": ["난이도 (2단계 ③)", "산출물 체크리스트 (2단계 ④)"]}
+            "not_implemented": ["산출물 체크리스트 (2단계 ④)"]}
 
 
 # ── HTML ──────────────────────────────────────────────────────────────────
@@ -174,6 +188,16 @@ function renderVersions() {
           el('span', {class: 'chg'}, changesText(n.changes)), '']),
       ];
       body.append(table(['구분', 'ID', '제목', '바뀐 부분', '내부 메모'], rows));
+    }
+    const df = v.difficulty;
+    body.append(el('h3', {}, `$${label} 판 준비 난이도 (미준비 +2 · 일부 +1 · 고객 사례 4건 증빙 +1 · 이번 버전 신규 +1)`));
+    if (!df || df.error) { body.append(el('p', {class: 'muted'}, '데이터 없음' + (df && df.error ? ' (' + df.error + ')' : ''))); }
+    else {
+      body.append(el('div', {class: 'kpis'}, kpi(df.counts.high, '상 (3~4점)'), kpi(df.counts.medium, '중 (2점)'), kpi(df.counts.low, '하 (0~1점)')));
+      body.append(el('p', {class: 'muted'}, '준비 상태 출처: data/sample/readiness.csv (가상 데이터). 파일에 없는 항목은 미준비로 계산합니다.'));
+      body.append(table(['난이도', '점수', 'ID', '제목', '준비 상태', '점수 근거'], df.items.map(i =>
+        [el('span', {class: i.level === '상' ? 'bad' : (i.level === '중' ? 'note' : 'ok')}, i.level), String(i.score), i.id, i.title,
+         i.readiness, el('span', {class: 'chg'}, i.reasons.join(' / '))])));
     }
     body.append(el('h3', {}, `$${label} 판 요구사항 $${v.total}개`));
     body.append(table(['ID', '제목', '시트', '영역', '범위', '내부 메모'],

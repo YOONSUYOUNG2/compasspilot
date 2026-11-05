@@ -11,10 +11,10 @@ from src.mcp_server import MCP_SERVER_CONFIG
 HAS_EXCEL = len(excel_files()) >= 2
 
 
-async def _call(args: dict):
+async def _call(args: dict, name: str = "diff_versions"):
     client = MultiServerMCPClient(MCP_SERVER_CONFIG)
     tools = {t.name: t for t in await client.get_tools()}
-    result = await tools["diff_versions"].ainvoke(args) if "diff_versions" in tools else None
+    result = await tools[name].ainvoke(args) if name in tools else None
     return sorted(tools), result
 
 
@@ -29,7 +29,7 @@ def _text(result) -> str:
 class TestMcpServer(unittest.TestCase):
     def test_tools_and_default_diff(self):
         names, result = asyncio.run(_call({}))
-        self.assertEqual(names, ["diff_versions"])
+        self.assertEqual(names, ["assess_difficulty", "diff_versions"])
         data = json.loads(_text(result))
         self.assertEqual(data["counts"]["added"], 8)
         self.assertEqual((data["from_version"], data["to_version"]), ("2025-08", "2026-08"))
@@ -37,6 +37,11 @@ class TestMcpServer(unittest.TestCase):
     def test_unknown_version(self):
         _, result = asyncio.run(_call({"to_version": "1999-01"}))
         self.assertIn("Unknown version", _text(result))
+
+    def test_assess_difficulty(self):
+        _, result = asyncio.run(_call({"requirement_ids": "POV-007, MOB-004"}, "assess_difficulty"))
+        items = {i["id"]: (i["score"], i["level"]) for i in json.loads(_text(result))["items"]}
+        self.assertEqual(items, {"POV-007": (3, "high"), "MOB-004": (2, "medium")})
 
 
 if __name__ == "__main__":

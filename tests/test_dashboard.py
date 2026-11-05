@@ -32,6 +32,12 @@ class TestDashboard(unittest.TestCase):
         self.assertEqual(v["labels"][:2], ["2025-08", "2026-08"])
         self.assertIsNone(v["versions"]["2025-08"]["diff"])  # 첫 버전은 비교 대상 없음
 
+    def test_difficulty_section(self):  # 2단계 ③: 55개 모두 판정, 점수 높은 순
+        df = self.data["versions"]["versions"]["2026-08"]["difficulty"]
+        self.assertEqual(sum(df["counts"].values()), 55)
+        self.assertEqual(df["items"][0]["level"], "상")
+        self.assertNotIn("난이도 (2단계 ③)", self.data["not_implemented"])
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 
