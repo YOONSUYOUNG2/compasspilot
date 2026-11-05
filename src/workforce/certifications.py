@@ -72,11 +72,22 @@ def _in_requested(row: dict, requested: dict) -> bool:
 
 
 def details(user_id: str | None, vendor: str = "", certification: str = "",
-            division: str = "", team: str = "", group: str = "") -> dict | str:
-    """권한 범위 안의 자격 보유자 명단. 범위 밖이면 고정 거절 문구를 돌려준다."""
+            division: str = "", team: str = "", group: str = "", other_than_mine: str = "") -> dict | str:
+    """권한 범위 안의 자격 보유자 명단. 범위 밖이면 고정 거절 문구를 돌려준다.
+
+    other_than_mine: "다른 사업부/팀/그룹"처럼 이름 없이 '내 것이 아닌' 조직을 요청할 때의 계층
+      ("division" | "team" | "group"). 사용자 소속이 그 계층에서 정해져 있으면(예: 그룹장의 '다른 그룹')
+      그 조직은 범위 밖이므로 거절한다. 정해져 있지 않으면(예: 팀장의 '다른 그룹' = 같은 팀 안) 범위 안이다.
+    """
     user = get_user(user_id)
     if user["role"] == "staff":
         return config.PERMISSION_REFUSAL
+    level = other_than_mine.strip().lower()
+    if level:
+        if level not in ORG_KEYS:
+            return {"error": "other_than_mine must be one of division, team, group"}
+        if user.get(level):
+            return config.PERMISSION_REFUSAL
     requested = resolve_org(division.strip(), team.strip(), group.strip())
     if requested is None:
         return {"error": "Unknown organization name", "organization": load_directory()["organization"]}
@@ -113,14 +124,17 @@ def count_certifications(vendor: str = "", group_by: str = "certification", conf
 
 @tool
 def get_certification_details(vendor: str = "", certification: str = "", division: str = "",
-                              team: str = "", group: str = "", config: RunnableConfig = None) -> str:
+                              team: str = "", group: str = "", other_than_mine: str = "",
+                              config: RunnableConfig = None) -> str:
     """자격 보유자 명단(이름 포함)을 조회한다. 사용자 권한 범위 안의 명단만 돌려준다.
 
     언제 쓰나: "보유자 명단", "누가 자격증을 갖고 있나", "이름이랑 자격증 목록"처럼 이름을 묻는 질문.
     권한은 시스템이 사용자 ID로 판단한다. 사용자의 직책이나 소속을 인자로 넣지 않는다.
     division/team/group: 질문에 특정 조직(예: "B사업부", "A2팀", "A1-2그룹")이 나올 때만 그대로 넣는다.
       "우리 사업부/팀/그룹"처럼 자기 조직을 말하면 비워 둔다.
+    other_than_mine: 이름 없이 "다른 사업부/다른 팀/다른 그룹"을 물으면 "division"/"team"/"group"을 넣는다.
+      되묻지 말고 이 인자로 바로 호출한다. 범위 판단은 시스템이 한다.
     결과가 "You do not have permission to view this information."이면 그 문장을 그대로 답한다.
     """
-    result = details(_user_id(config), vendor, certification, division, team, group)
+    result = details(_user_id(config), vendor, certification, division, team, group, other_than_mine)
     return result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)

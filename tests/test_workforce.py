@@ -67,6 +67,15 @@ class TestRefusals(unittest.TestCase):
         self.refused("glA11", group="A1-2그룹")
         self.refused("glA11", team="A1팀")       # 그룹장이 팀 전체 요청
 
+    def test_other_than_mine(self):
+        # 이름 없이 "다른 ○○"을 물은 경우: 사용자 소속이 그 계층에서 정해져 있으면 범위 밖
+        self.refused("glA11", other_than_mine="group")     # 평가 27번
+        self.refused("tlA1", other_than_mine="team")       # 평가 26번
+        self.refused("divA", other_than_mine="division")
+        # 팀장의 '다른 그룹'은 같은 팀 안이라 범위 안 → 명단 반환
+        self.assertIsInstance(details("tlA1", other_than_mine="group"), dict)
+        self.assertIsInstance(details("hr01", other_than_mine="division"), dict)
+
     def test_unknown_org(self):
         self.assertIn("error", details("hr01", division="Z사업부"))
 

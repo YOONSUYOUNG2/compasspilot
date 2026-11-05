@@ -85,9 +85,15 @@ def judge_rule(case: dict, answer: str, tools: list, agents: list, contexts: lis
     """문항 유형별 규칙 판정. (통과 여부, 설명)."""
     qtype = case["type"]
     expected_ids = case.get("expected_source") or []
-    found = [i for i in expected_ids if i in answer or any(i in c for c in contexts)]
+    # 기대 ID는 '답변 안'에 있어야 한다. 검색 결과에만 있고 답변이 틀린 경우를 통과시키지 않는다(라운드 3에서 발견).
+    found = [i for i in expected_ids if i in answer]
     id_ok = len(found) == len(expected_ids)
     id_note = f" / 기대 ID {len(found)}/{len(expected_ids)}" if expected_ids else ""
+
+    # 형식 검사: 답변은 영문 + 한국어 번역이다. 영문 부분이 비어 있으면 실패(라운드 4 #9에서 발견)
+    english = answer.split("### 한국어 번역")[0].replace("---", "").strip()
+    if len(english) < 20:
+        return False, "영문 답변 없음(형식 위반)"
 
     if qtype == "no_answer":
         ok = config.NOT_IN_DOCUMENT in answer
@@ -97,7 +103,9 @@ def judge_rule(case: dict, answer: str, tools: list, agents: list, contexts: lis
         ok = blocked == case["expected_block"]
         return ok, f"{'차단됨' if blocked else '통과됨'} (기대: {'차단' if case['expected_block'] else '통과'})"
     if qtype in DOC_TYPES:
-        return id_ok, f"근거 {expected_ids}: {'확인' if id_ok else '없음'}"
+        if config.NOT_IN_DOCUMENT in answer:
+            return False, f"근거 {expected_ids}: 답변이 '문서에 없음'"
+        return id_ok, f"근거 {expected_ids}: {'답변에 있음' if id_ok else '답변에 없음'}"
     if qtype == "no_tool":
         return not tools, f"호출 도구 {tools}"
     if qtype in TOOL_TYPES:
@@ -276,6 +284,12 @@ async def run(round_no: int, ids: set | None = None, use_judge: bool = True, jud
         # 저장된 전체 결과는 유지하고, --ids가 있으면 그 문항만 다시 심사한다
         data = json.loads(result_path(round_no).read_text(encoding="utf-8"))
         results = data["results"]
+        # 규칙 판정은 현재 규칙으로 다시 계산한다(저장된 답변·도구 기록 사용, LLM 호출 없음)
+        all_cases = {c["id"]: c for c in json.loads(EVAL_SET.read_text(encoding="utf-8"))}
+        for r in results:
+            if r["status"] == "ok" and r["id"] in all_cases:
+                passed, r["detail"] = judge_rule(all_cases[r["id"]], r["answer"], r["tools"], r["agents"], r["contexts"])
+                r["passed"] = passed
     else:
         app = await build_app()
         sem = asyncio.Semaphore(CONCURRENCY)
