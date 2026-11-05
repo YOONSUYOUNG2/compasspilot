@@ -16,6 +16,15 @@ from src import config
 
 BENCHMARK_CSV = config.SAMPLE_DIR / "partner_benchmark.csv"
 CRITERIA_CSV = config.SAMPLE_DIR / "tier_criteria.csv"
+# 우리 회사 표시명(로컬 비공개 설정, git 제외). 공개 저장소의 가상 데이터는 "우리 회사"로 둔다
+OUR_NAME_FILE = config.PRIVATE_DIR / "our_company.txt"
+
+
+def our_display_name(path=OUR_NAME_FILE) -> str | None:
+    if path.exists():
+        name = path.read_text(encoding="utf-8").strip().splitlines()
+        return name[0].strip() if name and name[0].strip() else None
+    return None
 METRICS = [("competencies", "Competency 수", "개"), ("certified_people", "AWS 자격 인원", "명"), ("launches", "고객 사례(Launch)", "건")]
 
 
@@ -24,7 +33,7 @@ def _read(path) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def load(bench_path=BENCHMARK_CSV, criteria_path=CRITERIA_CSV) -> tuple[list[dict], list[dict]]:
+def load(bench_path=BENCHMARK_CSV, criteria_path=CRITERIA_CSV, name_path=OUR_NAME_FILE) -> tuple[list[dict], list[dict]]:
     criteria = sorted(({"tier": r["tier"].strip(), "level": int(r["level"]),
                         **{m: int(r[m]) for m, _, _ in METRICS}} for r in _read(criteria_path)), key=lambda c: c["level"])
     level = {c["tier"]: c["level"] for c in criteria}
@@ -38,6 +47,9 @@ def load(bench_path=BENCHMARK_CSV, criteria_path=CRITERIA_CSV) -> tuple[list[dic
                           "in_progress": (r.get("in_progress") or "").strip()})
     if sum(c["is_us"] for c in companies) != 1:
         raise ValueError("is_us=1인 회사(우리 회사)가 정확히 하나여야 합니다")
+    name = our_display_name(name_path)
+    if name:
+        next(c for c in companies if c["is_us"])["company"] = name
     return companies, criteria
 
 

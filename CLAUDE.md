@@ -155,6 +155,7 @@ python -m evaluation.run_eval --round 1
   - 파이썬 기본 라이브러리(`html`, `string.Template`)로 HTML 파일 1개를 만든다. 외부 CSS·JS·CDN을 쓰지 않아 인터넷 없이 열린다.
   - 버전 드롭다운은 HTML 안에 넣은 자바스크립트로 처리한다(버전별 데이터를 JSON으로 함께 넣는다).
   - 도식(비율 막대·진행 막대·꺾은선)은 CSS와 인라인 SVG로 직접 그린다(차트 라이브러리 없음). 색은 상태(준비완료·일부·미준비 = good·warning·critical)와 구분(변경 종류 = 범주 색 1~4)으로만 쓰고, 색만으로 뜻을 전하지 않도록 범례·숫자·표를 함께 둔다.
+  - 현주소 시트: 등급 색은 Premier·Advanced·Select = 범주 색 2·1·3(모두 쌍 비교 검사 통과)으로 고정하고, 위치 지도의 점마다 회사명을 직접 붙인다. 우리 회사 표시명은 `data/private/our_company.txt`(git 제외)에서만 바꾸고, 공개 데이터와 코드·테스트에는 실명을 쓰지 않는다.
   - LLM을 호출하지 않는다. `data/derived/`의 파싱·비교 결과, `evaluation/eval_result.json`, 자격 CSV 집계만 읽는다. 같은 입력이면 같은 HTML이 나온다.
   - 사내 확인용이므로 화면 문구는 한국어로 쓰고 `[내부 메모]`도 보여 준다. Requirement 원문과 ID는 영문 그대로 둔다.
   - 누구나 열 수 있는 파일이므로 자격 현황은 **숫자 집계만** 넣고 이름은 넣지 않는다.

@@ -67,6 +67,16 @@ class TestSampleData(unittest.TestCase):
         companies, _ = load()
         self.assertEqual(sorted(c["company"] for c in companies if not c["is_us"]), ["A사", "B사", "C사", "D사", "E사"])
 
+    def test_our_display_name_from_private_file(self):  # 우리 회사 표시명은 비공개 설정 파일에서만 바뀐다
+        with tempfile.TemporaryDirectory() as d:
+            name = Path(d) / "our_company.txt"
+            companies, _ = load(name_path=name)  # 파일 없음 → 가상 데이터 이름 그대로
+            self.assertEqual(next(c for c in companies if c["is_us"])["company"], "우리 회사")
+            name.write_text("테스트회사\n", encoding="utf-8")
+            companies, _ = load(name_path=name)
+            self.assertEqual(next(c for c in companies if c["is_us"])["company"], "테스트회사")
+            self.assertEqual(sum(1 for c in companies if c["company"] == "테스트회사"), 1)  # 비교 회사 이름은 그대로
+
     def test_invalid_files(self):
         with tempfile.TemporaryDirectory() as d:
             b, c = Path(d) / "b.csv", Path(d) / "c.csv"

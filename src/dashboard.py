@@ -208,6 +208,21 @@ header{padding:20px 16px 8px;max-width:1200px;margin:auto}
 .rank .track>div{height:14px;border-radius:0 4px 4px 0;min-width:2px}
 .rank .us{background:var(--accent)}.rank .other{background:var(--other)}
 .me-t{font-weight:700;color:var(--fg)}
+svg.scatter text{font-size:12.5px}
+.kstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.ktile{border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:12px 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 12%,transparent),transparent 75%)}
+.ktile b{display:block;font-size:26px;font-weight:700;line-height:1.2}.ktile span{display:block;font-size:12.5px;color:var(--fg2)}.ktile small{color:var(--muted);font-size:11.5px}
+.road h4{margin-bottom:12px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;position:relative}
+.step{position:relative;border:1px solid var(--line);border-radius:10px;padding:12px 12px 10px;background:color-mix(in srgb,var(--c) 8%,var(--card));display:flex;flex-direction:column;gap:2px}
+.step .dot{width:28px;height:28px;border-radius:50%;background:var(--c);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:6px}
+.step.todo .dot{color:#0b0b0b}.step.goal{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.step:not(:last-child)::after{content:'→';position:absolute;right:-12px;top:14px;color:var(--muted);font-weight:700}
+.step small{color:var(--fg2);font-size:12px}
+.linkbtn{align-self:flex-start;border:0;background:none;color:var(--accent);font:inherit;font-size:12px;padding:4px 0 0;cursor:pointer}
+.rung{border-left:6px solid var(--c)}
+.co.me{background:var(--c,var(--accent));border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
+.motiv{background:linear-gradient(135deg,color-mix(in srgb,var(--s1) 14%,var(--card)),color-mix(in srgb,var(--s2) 12%,var(--card)))}
 .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;margin:0}header p{margin:4px 0 0;color:var(--muted)}
 main{max-width:1200px;margin:auto;padding:8px 16px 40px;display:grid;gap:16px}
@@ -356,8 +371,8 @@ function segBar(parts, label, thin) {
 const legend = parts => el('div', {class: 'legend'}, ...parts.map(p => el('span', {}, el('i', {style: 'background:' + p.color}), p.name)));
 const readyParts = (r, p, n, unit) => [{name: '준비완료', value: r, color: C.ready, unit}, {name: '일부', value: p, color: C.partial, ink: DARK_INK, unit},
   {name: '미준비', value: n, color: C.none, unit}];
-function meter(rate, label) {
-  const m = el('div', {class: 'meter', role: 'img'}, el('div', {style: 'width:' + Math.round((rate || 0) * 100) + '%'}));
+function meter(rate, label, color) {
+  const m = el('div', {class: 'meter', role: 'img'}, el('div', {style: 'width:' + Math.round((rate || 0) * 100) + '%' + (color ? ';background:' + color : '')}));
   return hover(m, label);
 }
 function statusChip(n, name, good, unit) {
@@ -745,61 +760,99 @@ function renderTodo() {
   box.append(el('p', {class: 'muted'}, '미구현: ' + D.not_implemented.join(', ')));
 }
 // ── 현주소 시트 (첫 화면): 우리 회사 vs 익명 A사~E사(가상 수치). 순위·격차·전망은 파이썬이 계산한 값을 보여만 준다 ──
+const TIER_COLOR = {Premier: 'var(--s2)', Advanced: 'var(--s1)', Select: 'var(--s3)'};
+const tierColor = t => TIER_COLOR[t] || 'var(--muted)';
+const tierChip = t => el('span', {class: 'tierchip', style: 'background:' + tierColor(t)}, 'AWS ' + t);
+const ktile = (color, value, label, sub) => el('div', {class: 'ktile', style: '--c:' + color},
+  el('b', {}, value), el('span', {}, label), sub ? el('small', {}, sub) : '');
+const shortName = s => /migration/i.test(s) ? 'M&M' : s;
+
 function renderHome() {
   const box = document.getElementById('home'); box.replaceChildren();
-  box.append(el('div', {class: 'axis-h'}, el('h2', {style: 'margin:0'}, '우리 회사 현주소 · AWS 파트너 등급'),
+  box.append(el('div', {class: 'axis-h'}, el('h2', {style: 'margin:0'}, '현주소 · AWS 파트너 등급'),
     el('span', {class: 'muted'}, '국내 대형 SI·IT서비스 5개 사(익명)와 비교 · 수치와 등급 기준은 모두 가상')));
   const B = D.benchmark && ok(D.benchmark);
   if (!B) { box.append(el('p', {class: 'muted'}, '데이터 없음' + (D.benchmark && D.benchmark.error ? ' (' + D.benchmark.error + ')' : ''))); return; }
   const us = B.us, nt = B.next_tier, P = B.projection, M = Object.fromEntries(B.metrics.map(m => [m.metric, m]));
+  const unmet = nt ? nt.conditions.filter(x => !x.met) : [], metN = nt ? nt.conditions.length - unmet.length : 0;
 
-  // 1) 종합 순위 + 등급 사다리
-  const left = el('div', {class: 'card'}, el('h4', {}, '종합 순위 (등급 → Competency 수 → 자격 인원 순)'),
-    el('div', {class: 'hero'}, B.overall_rank + '위', el('span', {class: 'hero-sub'}, ' / ' + B.companies + '개 사' + (B.tied ? ' (공동)' : ''))),
-    el('div', {}, '현재 등급 ', el('span', {class: 'tierchip'}, 'AWS ' + us.tier)));
-  if (B.nearest_above) { const g = B.nearest_above;
-    left.append(el('p', {class: 'muted', style: 'margin:8px 0 0'}, '바로 위 ' + g.company + '(' + g.tier + ')와 격차: Competency ' + g.competencies +
-      '개 · 자격 인원 ' + g.certified_people + '명 · 고객 사례 ' + g.launches + '건')); }
+  // 0) 핵심 지표 (색 띠 카드)
+  box.append(el('div', {class: 'kstrip'},
+    ktile('var(--accent)', B.overall_rank + '위', us.company + ' 종합 순위', B.companies + '개 사 중' + (B.tied ? ' (공동)' : '')),
+    ktile(tierColor(us.tier), us.tier, '현재 AWS 파트너 등급', nt ? '다음 목표: ' + nt.tier : '최고 등급'),
+    ktile(nt && nt.all_met ? 'var(--good)' : 'var(--warning)', nt ? metN + ' / ' + nt.conditions.length : '-', (nt ? nt.tier : '다음 등급') + ' 조건 충족',
+      nt ? nt.conditions.filter(x => x.met).map(x => x.label).join(' · ') + (metN ? ' 충족' : '') : ''),
+    ktile('var(--critical)', unmet.length ? unmet.map(x => x.gap + x.unit).join(' · ') : '없음', (nt ? nt.tier : '') + '까지 남은 조건',
+      unmet.map(x => x.label).join(' · '))));
+
+  // 1) Premier까지 로드맵 (단계도)
+  if (nt) {
+    const v = D.versions.latest && D.versions.versions[D.versions.latest], df = v && ok(v.difficulty);
+    const rc = df ? countBy(df.items, 'readiness') : null;
+    const steps = [{title: '지금', body: 'AWS ' + us.tier + ' · 조건 ' + metN + '/' + nt.conditions.length, color: tierColor(us.tier), state: 'cur'}];
+    for (const x of unmet) {
+      if (x.metric === 'competencies' && P) steps.push({title: shortName(P.competency) + ' Competency 취득',
+        body: 'Competency ' + x.current + ' → ' + (x.current + 1) + '개' + (rc ? ' · 준비완료 ' + Math.round((rc['준비완료'] || 0) / df.items.length * 100) + '%' : ''),
+        color: 'var(--warning)', state: 'todo', go: ['comp', 'summary']});
+      else steps.push({title: x.label + ' +' + x.gap + x.unit, body: x.current + ' → ' + x.required + x.unit,
+        color: 'var(--warning)', state: 'todo', go: x.metric === 'certified_people' ? ['cert', 'summary2'] : null});
+    }
+    steps.push({title: nt.tier + ' 진입', body: (P && P.tier_up && P.tier_up.same_tier.length ? P.tier_up.same_tier.join('·') + '와 같은 등급' : '다음 등급'),
+      color: tierColor(nt.tier), state: 'goal'});
+    const road = el('div', {class: 'steps', role: 'list', 'aria-label': nt.tier + '까지 로드맵'});
+    steps.forEach((s, i) => {
+      const node = el('div', {class: 'step ' + s.state, style: '--c:' + s.color, role: 'listitem'},
+        el('div', {class: 'dot'}, s.state === 'goal' ? '★' : String(i + 1)), el('b', {}, s.title), el('small', {}, s.body));
+      if (s.go) { const b = el('button', {class: 'linkbtn', type: 'button'}, '자세히 →'); b.addEventListener('click', () => goSheet(s.go[0], s.go[1])); node.append(b); }
+      road.append(node);
+    });
+    box.append(el('div', {class: 'card road'}, el('h4', {}, nt.tier + '까지 로드맵'), road));
+  }
+
+  // 2) 위치 지도(산점도) + 등급 사다리·분포
   const ladder = el('div', {class: 'card'}, el('h4', {}, '등급 사다리'));
   for (const t of B.tiers.slice().reverse()) {
     const isNext = nt && t.tier === nt.tier, isCur = t.tier === us.tier;
-    ladder.append(el('div', {class: 'rung' + (isCur ? ' cur' : '')},
+    ladder.append(el('div', {class: 'rung' + (isCur ? ' cur' : ''), style: '--c:' + tierColor(t.tier)},
       el('b', {class: 'rung-name'}, t.tier), el('div', {class: 'rung-cos'},
         ...(t.companies.length ? t.companies.map(c => el('span', {class: 'co' + (c === us.company ? ' me' : '')}, c)) : [el('span', {class: 'muted'}, '-')])),
       isNext ? el('span', {class: 'goal'}, '다음 목표') : (isCur ? el('span', {class: 'goal cur'}, '현재') : '')));
   }
-  box.append(el('div', {class: 'sum'}, left, ladder));
+  const dist = B.tiers.slice().reverse().map(t => ({name: t.tier, value: t.companies.length, color: tierColor(t.tier), unit: '개 사'}));
+  ladder.append(el('h4', {style: 'margin-top:14px'}, '등급 분포 (' + B.companies + '개 사)'), segBar(dist, '등급 분포'), legend(dist.filter(d => d.value)));
+  if (B.nearest_above) { const g = B.nearest_above;
+    ladder.append(el('p', {class: 'rule', style: 'margin:10px 0 0'}, '바로 위 ' + g.company + '(' + g.tier + ')와 격차: Competency ' + g.competencies +
+      '개 · 자격 인원 ' + g.certified_people + '명 · 고객 사례 ' + g.launches + '건')); }
+  box.append(el('div', {class: 'card', style: 'margin-top:16px'}, el('h4', {}, '위치 지도: Competency 수 × AWS 자격 인원 (점선 화살표 = ' + us.company + '의 ' + (nt ? nt.tier : '') + ' 진입 경로)'),
+    scatterMap(B, nt, P), legend(B.tiers.slice().reverse().filter(t => t.companies.length).map(t => ({name: t.tier, color: tierColor(t.tier)})))));
 
-  // 2) 다음 등급 조건 + 3) 취득하면 이렇게 바뀐다
-  const row2 = el('div', {class: 'sum', style: 'margin-top:16px'});
+  // 3) 다음 등급 조건 + 취득하면 이렇게 바뀐다
+  const row2 = el('div', {class: 'sum', style: 'margin-top:16px'}, ladder);
   if (nt) {
-    const c = el('div', {class: 'card'}, el('h4', {}, '다음 등급 ' + nt.tier + '까지 (조건 ' + nt.conditions.filter(x => x.met).length + '/' + nt.conditions.length + ' 충족)'));
+    const c = el('div', {class: 'card'}, el('h4', {}, '다음 등급 ' + nt.tier + ' 조건 (' + metN + '/' + nt.conditions.length + ' 충족)'));
     const g = el('div', {class: 'vrows'});
     for (const x of nt.conditions) {
-      const rate = Math.min(1, x.current / x.required);
-      g.append(el('span', {}, x.label), meter(rate, x.label + ' ' + x.current + ' / 기준 ' + x.required + x.unit),
+      g.append(el('span', {}, x.label), meter(Math.min(1, x.current / x.required), x.label + ' ' + x.current + ' / 기준 ' + x.required + x.unit,
+        x.met ? 'var(--good)' : 'var(--warning)'),
         el('span', {class: x.met ? 'ok' : 'bad'}, x.current + ' / ' + x.required + x.unit + (x.met ? ' ✓ 충족' : ' · ' + x.gap + x.unit + ' 부족')));
     }
     c.append(g); row2.append(c);
   } else row2.append(el('div', {class: 'card'}, el('h4', {}, '최고 등급입니다'), el('p', {class: 'muted'}, '등급 유지 조건을 지켜 주세요.')));
   if (P) {
     const pm = P.next_tier ? P.next_tier.conditions.filter(x => x.met).length : null;
-    const v = D.versions.latest && D.versions.versions[D.versions.latest], df = v && ok(v.difficulty);
-    const rc = df ? countBy(df.items, 'readiness') : null;
-    const mot = el('div', {class: 'card motiv'}, el('h4', {}, P.competency + ' Competency를 취득하면'),
+    const mot = el('div', {class: 'card motiv'}, el('h4', {}, '🚀 ' + shortName(P.competency) + ' Competency를 취득하면'),
       el('ul', {},
         el('li', {}, 'Competency ', el('b', {}, us.competencies + ' → ' + P.competencies + '개'), ', Competency 순위 ',
           el('b', {}, M.competencies.rank + '위 → ' + P.competency_rank + '위' + (P.competency_tied ? '(공동)' : ''))),
-        P.next_tier ? el('li', {}, P.next_tier.tier + ' 조건 ', el('b', {}, nt.conditions.filter(x => x.met).length + '/' + nt.conditions.length + ' → ' + pm + '/' + P.next_tier.conditions.length + ' 충족')) : '',
+        P.next_tier ? el('li', {}, P.next_tier.tier + ' 조건 ', el('b', {}, metN + '/' + nt.conditions.length + ' → ' + pm + '/' + P.next_tier.conditions.length + ' 충족')) : '',
         P.tier_up ? el('li', {}, '남은 조건: ', el('b', {}, P.tier_up.remaining.map(x => x.label + ' ' + x.gap + x.unit).join(', ')),
-          ' → 채우면 ', el('b', {}, P.tier_up.tier + ' 등급 진입'), P.tier_up.same_tier.length ? ' (' + P.tier_up.same_tier.join('·') + '와 같은 등급)' : '') : ''),
-      rc ? el('p', {class: 'muted', style: 'margin:4px 0 8px'}, 'M&M 준비 현황: 준비완료 ' + Math.round((rc['준비완료'] || 0) / df.items.length * 100) + '% · 미준비 ' + (rc['미준비'] || 0) + '개 · 난이도 상 ' + df.counts.high + '개') : '');
+          ' → 채우면 ', el('b', {}, P.tier_up.tier + ' 등급 진입'), P.tier_up.same_tier.length ? ' (' + P.tier_up.same_tier.join('·') + '와 같은 등급)' : '') : ''));
     const b1 = el('button', {class: 'btn', type: 'button'}, 'M&M 준비 현황 보기'); b1.addEventListener('click', () => goSheet('comp', 'summary'));
     const b2 = el('button', {class: 'btn', type: 'button'}, '자격 취득 현황 보기'); b2.addEventListener('click', () => goSheet('cert', 'summary2'));
     mot.append(el('div', {class: 'row', style: 'margin:0'}, b1, b2));
-    row2.append(mot);
-  }
-  box.append(row2);
+    mot.setAttribute('style', 'margin-top:16px');
+    box.append(row2, mot);
+  } else box.append(row2);
 
   // 4) 지표별 순위 (우리 회사만 강조색, 나머지 회색)
   const charts = el('div', {class: 'grid3', style: 'margin-top:16px'});
@@ -812,15 +865,61 @@ function renderHome() {
           x.value + m.unit + ' · ' + x.company),
         el('span', {class: x.is_us ? 'me-t' : 'muted'}, x.value + m.unit));
     }
-    charts.append(el('div', {class: 'card'}, el('h4', {}, m.label + ' · 우리 ' + m.rank + '위'), bars,
+    charts.append(el('div', {class: 'card'}, el('h4', {}, m.label + ' · ' + us.company + ' ' + m.rank + '위'), bars,
       el('p', {class: 'rule', style: 'margin:8px 0 0'}, '1위와 ' + m.gap_to_leader + m.unit + ' 차이' + (m.gap_to_next ? ' · 바로 위와 ' + m.gap_to_next + m.unit + ' 차이' : ' · 공동 또는 1위'))));
   }
   box.append(charts);
 
   // 5) 전체 비교 표
   box.append(el('h3', {}, '전체 비교 (가상 수치)'), table(['종합 순위', '회사', 'AWS 등급', 'Competency', 'AWS 자격 인원', '고객 사례'],
-    B.table.map(r => [String(r.rank), r.is_us ? el('b', {}, r.company) : r.company, r.tier, String(r.competencies), String(r.certified_people), String(r.launches)])),
+    B.table.map(r => [String(r.rank), r.is_us ? el('b', {}, r.company) : r.company, tierChip(r.tier), String(r.competencies), String(r.certified_people), String(r.launches)])),
     el('p', {class: 'rule', style: 'margin-top:8px'}, '비교 회사는 익명(A사~E사)이며 수치·등급 기준은 시연용 가상 데이터입니다(data/sample/partner_benchmark.csv, tier_criteria.csv). 실제 공개 자료로 바꿀 때는 CSV만 고칩니다.'));
+}
+
+// 위치 지도: 가로 Competency 수, 세로 AWS 자격 인원. 다음 등급 기준 영역을 칠하고, 우리 회사가 그 영역으로 들어가는 경로를 화살표로 그린다
+function scatterMap(B, nt, P) {
+  const W = 960, H = 400, L = 64, R = 40, T = 40, Bm = 48;
+  const rows = B.table, req = nt ? Object.fromEntries(nt.conditions.map(c => [c.metric, c.required])) : null;
+  const xmax = Math.max(...rows.map(r => r.competencies), req ? req.competencies : 0) + 1;
+  const ymax = Math.ceil(Math.max(...rows.map(r => r.certified_people), req ? req.certified_people : 0) * 1.1 / 100) * 100;
+  const X = v => L + v / xmax * (W - L - R), Y = v => T + (1 - v / ymax) * (H - T - Bm);
+  const s = svg('svg', {viewBox: '0 0 ' + W + ' ' + H, width: '100%', role: 'img',
+    class: 'scatter', 'aria-label': '위치 지도: ' + rows.map(r => r.company + ' Competency ' + r.competencies + ', 자격 ' + r.certified_people).join(' / ')});
+  const txt = (x, y, t, attrs) => { const e = svg('text', {x, y, ...(attrs || {})}); e.textContent = t; s.append(e); return e; };
+  for (const v of [0, ymax / 2, ymax]) { s.append(svg('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--line)', 'stroke-width': 1}));
+    txt(L - 8, Y(v) + 4, String(v), {'text-anchor': 'end'}); }
+  for (let v = 0; v <= xmax; v += xmax > 10 ? 2 : 1) txt(X(v), H - Bm + 18, String(v), {'text-anchor': 'middle'});
+  txt((L + W - R) / 2, H - 6, 'Competency 수 →', {'text-anchor': 'middle', style: 'font-weight:600'});
+  txt(L - 8, T - 18, '↑ AWS 자격 인원', {'text-anchor': 'start', style: 'font-weight:600'});
+  if (req) {  // 다음 등급 기준 영역
+    s.append(svg('rect', {x: X(req.competencies), y: T, width: W - R - X(req.competencies), height: Y(req.certified_people) - T,
+      fill: tierColor(nt.tier), 'fill-opacity': 0.12, stroke: tierColor(nt.tier), 'stroke-width': 1, rx: 6}));
+    txt(X(req.competencies) + 8, T + 16, nt.tier + ' 기준 영역 (Competency ≥ ' + req.competencies + ', 자격 ≥ ' + req.certified_people + ')',
+      {style: 'fill:var(--fg2);font-weight:600'});
+  }
+  const usRow = rows.find(r => r.is_us);
+  if (P && P.tier_up && usRow) {  // 진입 경로: 지금 → M&M 취득 → 남은 조건 충족
+    const p0 = [usRow.competencies, usRow.certified_people], p1 = [P.competencies, usRow.certified_people];
+    const p2 = [P.competencies, Math.max(usRow.certified_people, req.certified_people)];
+    s.append(svg('path', {d: 'M' + X(p0[0]) + ' ' + Y(p0[1]) + ' L' + X(p1[0]) + ' ' + Y(p1[1]) + ' L' + X(p2[0]) + ' ' + Y(p2[1]),
+      fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-dasharray': '6 4', 'stroke-linejoin': 'round'}));
+    s.append(svg('path', {d: 'M' + (X(p2[0]) - 6) + ' ' + (Y(p2[1]) + 9) + ' L' + X(p2[0]) + ' ' + (Y(p2[1]) - 1) + ' L' + (X(p2[0]) + 6) + ' ' + (Y(p2[1]) + 9) + ' Z',
+      fill: 'var(--accent)'}));
+    s.append(svg('circle', {cx: X(p1[0]), cy: Y(p1[1]), r: 5, fill: 'var(--card)', stroke: 'var(--accent)', 'stroke-width': 2}));
+    txt(X(p1[0]) + 9, Y(p1[1]) + 16, shortName(P.competency) + ' 취득', {style: 'fill:var(--accent);font-weight:600'});
+    txt(X(p2[0]) + 12, Y(p2[1]) - 10, P.tier_up.remaining.map(x => x.label.replace('AWS ', '') + ' +' + x.gap + x.unit).join(', ') + ' → ' + P.tier_up.tier,
+      {style: 'fill:var(--accent);font-weight:600'});
+  }
+  const usY = usRow ? Y(usRow.certified_people) : -99, usX = usRow ? X(usRow.competencies) : -99;
+  for (const r of rows.slice().sort((a, b) => a.is_us - b.is_us)) {  // 우리 회사를 맨 위에 그린다
+    const cx = X(r.competencies), cy = Y(r.certified_people);
+    const near = !r.is_us && Math.abs(cy - usY) < 18 && Math.abs(cx - usX) < 40;  // 우리 회사 점과 가까우면 라벨을 아래로
+    const dot = svg('circle', {cx, cy, r: r.is_us ? 9 : 6, fill: tierColor(r.tier), stroke: r.is_us ? 'var(--fg)' : 'var(--card)', 'stroke-width': r.is_us ? 2.5 : 2});
+    s.append(hover(dot, r.company + ' · ' + r.tier + ' · Competency ' + r.competencies + ' · 자격 ' + r.certified_people + '명'));
+    txt(r.is_us ? cx - 14 : (near ? cx : cx + 11), r.is_us ? cy + 4 : (near ? cy + 20 : cy + 4), r.company,
+      r.is_us ? {'text-anchor': 'end', style: 'fill:var(--fg);font-weight:700;font-size:14px'} : (near ? {'text-anchor': 'middle'} : {}));
+  }
+  return s;
 }
 
 // ── 시트 전환 (엑셀 시트처럼). 고른 시트는 주소 #view=comp·cert·eval에 남겨 새로고침·공유해도 유지한다 ──
