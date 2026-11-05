@@ -177,10 +177,16 @@ PAGE = Template(r"""<!doctype html>
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif}
 header{padding:20px 16px 8px;max-width:1200px;margin:auto}
+.sheets{position:sticky;top:0;z-index:5;background:var(--bg);max-width:1200px;margin:auto;padding:8px 16px 0;display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.sheet-tab{font:inherit;font-weight:600;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--chip);color:var(--fg2);padding:8px 18px;cursor:pointer;white-space:nowrap;margin-bottom:-1px}
+.sheet-tab.on{background:var(--card);color:var(--fg);box-shadow:inset 0 3px 0 var(--accent)}
+.sheet-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sheet{display:grid;gap:16px}.sheet[hidden]{display:none}
+.sumsec .axis{border:0;padding:0;margin:0}
 .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;margin:0}header p{margin:4px 0 0;color:var(--muted)}
 main{max-width:1200px;margin:auto;padding:8px 16px 40px;display:grid;gap:16px}
-section,details.sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
 h2{font-size:16px;margin:0 0 12px}h3{font-size:14px;margin:18px 0 8px}h4{font-size:13px;margin:0 0 8px;color:var(--fg2)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
@@ -233,24 +239,34 @@ input[type=search]{min-width:180px}.btn{cursor:pointer;padding:4px 12px}.btn:hov
 tr.detail td{background:var(--bg)}
 .orig{white-space:pre-wrap;font-size:12.5px;line-height:1.6;max-width:900px}
 .orig b{display:block;margin-bottom:4px}
-details.sec>summary{cursor:pointer;font-weight:600;font-size:16px}
-details.sec[open]>summary{margin-bottom:12px}
 svg text{fill:var(--muted);font-size:11px}
 .tip{position:fixed;display:none;pointer-events:none;z-index:10;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:320px}
 footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
 @media (max-width:700px){.sum{grid-template-columns:1fr}.hero{font-size:44px}}
-@media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,.tpl,details.sec{display:none!important}
+@media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,.tpl,.sheets,.sheet[hidden]{display:none!important}
 section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 </style></head><body>
 <header><div class="hrow"><div><h1>CompassPilot · CSP 파트너 등급 관리 대시보드</h1>
 <p>Competency(AWS M&amp;M Assessment)와 임직원 자격, 파트너 등급의 두 축을 한 화면에서 봅니다. 생성: $generated</p></div>
 <button class="btn" id="printbtn" type="button">인쇄</button></div></header>
+<nav class="sheets" role="tablist" aria-label="시트">
+<button type="button" role="tab" class="sheet-tab" id="tab-comp" data-sheet="comp">Competency</button>
+<button type="button" role="tab" class="sheet-tab" id="tab-cert" data-sheet="cert">임직원 자격</button>
+<button type="button" role="tab" class="sheet-tab" id="tab-eval" data-sheet="eval">자체 평가</button>
+</nav>
 <main>
-<section id="summary"></section>
+<div class="sheet" id="sheet-comp" role="tabpanel" aria-labelledby="tab-comp">
+<section id="summary" class="sumsec"></section>
 <section id="ver"></section>
-<section id="cert"></section>
 <section id="todo"></section>
-<details class="sec"><summary id="evalsum">③ 자체 평가 결과</summary><div id="eval"></div></details>
+</div>
+<div class="sheet" id="sheet-cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+<section id="summary2" class="sumsec"></section>
+<section id="cert"></section>
+</div>
+<div class="sheet" id="sheet-eval" role="tabpanel" aria-labelledby="tab-eval" hidden>
+<section id="eval"></section>
+</div>
 </main>
 <div id="tip" class="tip" role="tooltip"></div>
 <footer>사내 확인용. 자격 현황은 숫자 집계만 표시합니다(이름 없음). 원문·ID는 AWS 영문 그대로입니다. 막대에 마우스를 올리거나 Tab 키로 이동하면 값이 보입니다.</footer>
@@ -332,12 +348,14 @@ const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0
 
 // ── 한눈 요약 (최신 버전 기준) ──
 function renderSummary() {
-  const box = document.getElementById('summary'); box.replaceChildren(el('h2', {}, '한눈 요약'));
+  // 시트마다 맨 위에 그 축의 한눈 요약을 둔다 (Competency 시트: #summary, 임직원 자격 시트: #summary2)
+  const box = document.getElementById('summary'); box.replaceChildren();
+  const certBox = document.getElementById('summary2'); certBox.replaceChildren();
+  renderCertSummary(certBox);
   const V = D.versions; if (!V.latest) { box.append(el('p', {class: 'muted'}, '데이터 없음')); return; }
   const v = V.versions[V.latest], df = ok(v.difficulty), dv = ok(v.deliverables), d = v.diff;
-  box.append(el('p', {class: 'rule'}, '파트너 등급을 정하는 두 축을 나눠 봅니다: ① 회사가 취득할 Competency ② 임직원 개인 자격.'));
-  // ── ① Competency 준비 ──
-  const comp = axisBlock('①', 'Competency 준비', 'AWS M&M · ' + V.latest + ' 판(최신) · 준비 상태는 가상 데이터');
+  // ── Competency 준비 ──
+  const comp = axisBlock('', 'Competency 한눈 요약', 'AWS M&M · ' + V.latest + ' 판(최신) · 준비 상태는 가상 데이터');
   const left = el('div', {class: 'card'});
   if (df) {
     const rc = countBy(df.items, 'readiness'), r = rc['준비완료'] || 0, p = rc['일부'] || 0, n = rc['미준비'] || 0, all = r + p + n;
@@ -362,15 +380,18 @@ function renderSummary() {
     const top = df.items.filter(i => i.readiness !== '준비완료').slice(0, 5);
     const go = el('button', {class: 'btn', type: 'button'}, '난이도 상 전체 보기');
     go.addEventListener('click', () => { STATE.tab = 'prep'; STATE.level = '상'; STATE.q = ''; STATE.scope = '';
-      renderVersions(); const t = document.getElementById('ver'); if (t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); });
+      renderVersions(); goSheet('comp', 'ver'); });
     comp.append(el('h4', {style: 'margin-top:16px'}, '우선 준비 항목 (점수 높은 순, 준비완료 제외)'),
       table(['난이도', '점수', 'ID', '제목', '준비 상태', '산출물'], top.map(i => [lvChip(i.level), String(i.score), i.id, i.title,
         i.readiness, byDel[i.id] ? byDel[i.id].deliverables.length + '개' : '-'])),
       el('div', {class: 'row', style: 'margin:8px 0 0'}, go));
   }
 
-  // ── ② 임직원 자격 ──
-  const cert = axisBlock('②', '임직원 자격', '취득 대상 대비 실적 · 가상 데이터 · 숫자만(이름 없음)');
+}
+
+function renderCertSummary(box) {
+  // ── 임직원 자격 ──
+  const cert = axisBlock('', '임직원 자격 한눈 요약', '취득 대상 대비 실적 · 가상 데이터 · 숫자만(이름 없음)');
   const T = D.certs && ok(D.certs.targets);
   if (!T) { cert.append(el('p', {class: 'muted'}, '자격 대상 데이터 없음')); box.append(cert); return; }
   const P = T.by_person;
@@ -384,8 +405,8 @@ function renderSummary() {
     vrows.append(el('span', {}, v), meter(x.rate, pct(x.rate) + ' · ' + v + ' 취득 ' + x.achieved + ' / 대상 ' + x.target),
       el('span', {class: 'muted'}, pct(x.rate) + ' (' + x.achieved + '/' + x.target + ')')); }
   const K = T.checks, errs = K.unknown_employee_ids + K.duplicate_rows;
-  const goCert = el('button', {class: 'btn', type: 'button'}, '자격 현황 자세히 보기');
-  goCert.addEventListener('click', () => { const t = document.getElementById('cert'); if (t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); });
+  const goCert = el('button', {class: 'btn', type: 'button'}, '조직별·점검 상세 보기');
+  goCert.addEventListener('click', () => goSheet('cert', 'cert'));
   const cright = el('div', {class: 'card'}, el('h4', {}, '벤더별 취득률'), vrows,
     el('div', {style: 'margin-top:12px'}, statusChip(errs, '데이터 점검 오류', true), statusChip(P.none, '미취득 인원', true, '명')),
     el('div', {class: 'row', style: 'margin:4px 0 0'}, goCert));
@@ -400,7 +421,7 @@ function axisBlock(no, title, sub) {
 
 // ── ① Competency 버전 ──
 function renderVersions() {
-  const box = document.getElementById('ver'); box.replaceChildren(el('h2', {}, '① Competency · Assessment 버전'));
+  const box = document.getElementById('ver'); box.replaceChildren(el('h2', {}, 'Assessment 버전별 상세'));
   const V = D.versions; if (!V.latest) { box.append(el('p', {class: 'muted'}, '데이터 없음')); return; }
   const sel = el('select', {id: 'vsel'}, ...V.labels.slice().reverse().map(l => el('option', {value: l}, l + ' 판')));
   box.append(el('div', {class: 'row'}, el('label', {for: 'vsel'}, '버전 선택'), sel,
@@ -595,7 +616,7 @@ function drawAll(pane, v) {
 
 // ── ② 임직원 자격 ──
 function renderCerts() {
-  const box = document.getElementById('cert'); box.replaceChildren(el('h2', {}, '② 임직원 자격 현황 (숫자만, 가상 데이터)'));
+  const box = document.getElementById('cert'); box.replaceChildren(el('h2', {}, '임직원 자격 상세 (숫자만, 가상 데이터)'));
   const CE = D.certs; if (!CE) { box.append(el('p', {class: 'muted'}, '데이터 없음')); return; }
   const T = ok(CE.targets);
   if (T) drawTargets(box, T);
@@ -618,22 +639,8 @@ function renderCerts() {
 
 function drawTargets(box, T) {
   const P = T.by_person;
-  box.append(el('p', {class: 'rule'}, '취득 대상(data/sample/cert_targets.csv) 대비 실적입니다. 대상 벤더의 자격을 1건 이상 보유하면 취득으로 봅니다. 벤더별은 연인원, 사람별은 실인원 기준입니다.'));
-  const grid = el('div', {class: 'grid2'});
-  const vendorCard = el('div', {class: 'card'}, el('h4', {}, '벤더별 대상 대비 취득 (연인원)'));
-  const vt = table(['벤더', '취득률', '', '취득 / 대상'], [
-    ...T.vendors.map(v => { const x = T.by_vendor[v];
-      return [v, el('b', {}, pct(x.rate)), meter(x.rate, pct(x.rate) + ' · ' + v + ' 취득 ' + x.achieved + ' / 대상 ' + x.target), x.achieved + ' / ' + x.target]; }),
-    [el('b', {}, '합계'), el('b', {}, pct(T.total.rate)), meter(T.total.rate, pct(T.total.rate) + ' · 전체 취득 ' + T.total.achieved + ' / 대상 ' + T.total.target),
-      T.total.achieved + ' / ' + T.total.target]]);
-  vendorCard.append(vt);
-  const pparts = [{name: '전부 취득', value: P.all, color: C.ready, unit: '명'}, {name: '일부 취득', value: P.partial, color: C.partial, ink: DARK_INK, unit: '명'},
-    {name: '미취득 (0건)', value: P.none, color: C.none, unit: '명'}];
-  const personCard = el('div', {class: 'card'}, el('h4', {}, '사람별 취득 현황 (실인원 ' + P.people + '명)'),
-    segBar(pparts, '사람별 취득 현황'), legend(pparts),
-    el('p', {class: 'rule', style: 'margin-top:8px'}, '(참고) 2개 이상 벤더 대상자 ' + P.multi_vendor + '명'));
-  grid.append(vendorCard, personCard);
-  box.append(grid);
+  box.append(el('p', {class: 'rule'}, '취득 대상(data/sample/cert_targets.csv) 대비 실적입니다. 대상 벤더의 자격을 1건 이상 보유하면 취득으로 봅니다. 벤더별은 연인원, 사람별은 실인원 기준입니다. (참고) 2개 이상 벤더 대상자 ' + P.multi_vendor + '명.'));
+  // 벤더별·사람별 현황은 시트 맨 위 한눈 요약에 있으므로 상세 칸에서는 반복하지 않는다
 
   const LEVELS = [['by_division', '사업부'], ['by_team', '팀'], ['by_group', '그룹']];
   const lv = el('select', {'aria-label': '조직 단위'}, ...LEVELS.map(([k, n]) => el('option', {value: k}, n + '별')));
@@ -683,11 +690,10 @@ function lineChart(points, label) {  // points: [{x: 라운드, y: 0~1, tip}]
 }
 
 function renderEval() {
-  const box = document.getElementById('eval'); box.replaceChildren();
+  const box = document.getElementById('eval'); box.replaceChildren(el('h2', {}, '자체 평가 결과'));
   const E = D.eval; if (!E) { box.append(el('p', {class: 'muted'}, '데이터 없음 (python -m evaluation.run_eval --round N)')); return; }
   const s = E.summary;
-  document.getElementById('evalsum').textContent =
-    '③ 자체 평가 결과 · 라운드 ' + E.round + ' · ' + s.passed + '/' + s.total + ' 통과 · judge ' + fmt(s.judge_mean_score) + ' (눌러서 펼치기)';
+  const tab = document.getElementById('tab-eval'); if (tab) tab.textContent = '자체 평가 (' + s.passed + '/' + s.total + ')';
   box.append(el('p', {class: 'muted'}, '최신 라운드 ' + E.round + ' · ' + (E.run_at || '') + ' · ' + ((E.model || {}).chat || '')));
   box.append(el('div', {class: 'kpis'}, kpi(s.passed + '/' + s.total, '규칙 판정 통과'), kpi(fmt(s.judge_mean_score), 'LLM judge 평균(1~5)'),
     ...Object.entries(s.ragas_mean || {}).map(([m, v]) => kpi(fmt(v), m))));
@@ -709,8 +715,26 @@ function renderTodo() {
   box.replaceChildren(el('h2', {}, '④ 준비 중'));
   box.append(el('p', {class: 'muted'}, '미구현: ' + D.not_implemented.join(', ')));
 }
+// ── 시트 전환 (엑셀 시트처럼). 고른 시트는 주소 #view=comp·cert·eval에 남겨 새로고침·공유해도 유지한다 ──
+const SHEETS = ['comp', 'cert', 'eval'];
+function showSheet(key, keepHash) {
+  if (!SHEETS.includes(key)) key = 'comp';
+  for (const k of SHEETS) {
+    const panel = document.getElementById('sheet-' + k), tab = document.getElementById('tab-' + k);
+    if (panel) { if (k === key) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', ''); }
+    if (tab) { tab.className = 'sheet-tab' + (k === key ? ' on' : ''); tab.setAttribute('aria-selected', String(k === key)); }
+  }
+  // 주소는 #view=… 형식: #cert처럼 쓰면 브라우저가 같은 id의 칸으로 스크롤해 요약이 가려진다
+  if (!keepHash) { try { history.replaceState(null, '', '#view=' + key); } catch (e) { /* file:// 등에서 막히면 무시 */ } }
+  if (window.scrollTo) window.scrollTo(0, 0);
+}
+for (const k of SHEETS) { const t = document.getElementById('tab-' + k); if (t) t.addEventListener('click', () => showSheet(k)); }
+function goSheet(key, targetId) { showSheet(key); const t = document.getElementById(targetId);
+  if (t && t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); }
+
 const pb = document.getElementById('printbtn'); if (pb) pb.addEventListener('click', () => window.print());
 renderVersions(); renderSummary(); renderCerts(); renderEval(); renderTodo();
+showSheet(((typeof location !== 'undefined' && location.hash) || '').replace(/^#(view=)?/, ''), true);
 </script></body></html>
 """)
 

@@ -58,5 +58,7 @@
   - 확인: README의 명령어가 실제로 실행됨, CLAUDE.md·SERVICE.md 링크가 깨지지 않음, 공개 파일에 키·내부 메모 0건
 - [x] **T24 한눈 요약 분리**(사용자 검토 반영): ① Competency 준비 / ② 임직원 자격 두 블록으로 나누고, 자체 평가는 요약에서 뺀다
   - 확인: 가짜 DOM 동작 시험, 스크린샷(밝은·다크) 확인, unittest
+- [x] **T25 시트 구성**(사용자 요청): 화면 위 시트 탭(Competency / 임직원 자격 / 자체 평가), 시트별 한눈 요약, 주소(#)로 시트 기억, 보고 있는 시트만 인쇄
+  - 확인: 가짜 DOM 동작 시험(시트 전환·주소 복원), 스크린샷(시트 3개), unittest
 - [ ] **T18 제출**: 최종 라운드 평가·보고서, `evaluation/unittest_log.txt`, `docs/architecture.md`(Mermaid), 대시보드 갱신, GitHub 저장소 생성 → 올릴 파일 목록 확인 → push, 패들릿 제출
   - 확인: 저장소에 `.env`·`data/private`·`ref` 없음, 최종 라운드 보고서가 SERVICE.md 기준(S4~S6, S11) 충족
