@@ -17,7 +17,7 @@
   - 확인: MCP 클라이언트로 도구 목록 조회·호출 → 추가 8건 확인
 - [x] **T6 Supervisor** + 하위 에이전트 3개 + CLI (1h)
   - 확인: `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` → 영문 답변 + `### 한국어 번역`, 8개 ID 포함 (S1)
-- [ ] **T7 입력 가드레일** + FileTracer (1h)
+- [x] **T7 입력 가드레일** + FileTracer (1h)
   - 확인: 주입 문장 → `Sorry, I can't process that request.`, 정상 질문 통과, `trace.jsonl` 기록
 - [ ] **T8 평가셋** 1단계 20문항(참조 답변 포함) + `run_eval.py` 수정 (1h)
   - 확인: `python -m evaluation.run_eval --round 0` → 규칙 판정 결과가 담긴 `eval_result_round0.json` 생성 (시험 실행)

@@ -1,11 +1,12 @@
 """CLI: python -m src.main --user <user_id> "질문"   (--user 생략 시 staff)
 
-T7에서 입력 가드레일과 trace 기록을 앞뒤에 붙인다.
+흐름: 입력 가드레일 → Supervisor → 답변. 실행 기록은 trace.jsonl, 차단 사유는 guard_audit.log.
 """
 import argparse
 import asyncio
 import logging
 import sys
+import time
 import warnings
 
 from langchain_core.messages import HumanMessage
@@ -14,6 +15,8 @@ from langchain_core.messages import HumanMessage
 _show = warnings.showwarning
 warnings.showwarning = lambda *args, **kwargs: None
 from src.agents import build_app, get_text  # noqa: E402
+from src.guards.input_guard import input_guard, log_block, refusal_text  # noqa: E402
+from src.tracer import FileTracer  # noqa: E402
 warnings.showwarning = _show
 logging.getLogger("langchain_aws").setLevel(logging.ERROR)  # 도구 블록 변환 안내 로그 숨김
 
@@ -21,12 +24,28 @@ DEFAULT_USER = "staff"
 
 
 async def ask(app, question: str, user_id: str = DEFAULT_USER, callbacks=None) -> dict:
-    """질문 하나를 실행하고 최종 답변과 전체 결과를 돌려준다."""
-    config = {"configurable": {"user_id": user_id}, "recursion_limit": 30}
-    if callbacks:
-        config["callbacks"] = callbacks
+    """질문 하나를 실행한다: 입력 가드레일 → Supervisor. 모든 단계는 trace.jsonl에 남는다.
+
+    반환: {"answer": 최종 답변, "blocked": 차단 여부, "result": 그래프 결과(차단 시 None)}
+    """
+    start = time.time()
+    tracer = FileTracer(user_id=user_id)
+    tracer.question(question)
+
+    blocked, reason = input_guard(question)
+    if blocked:
+        log_block("injection", reason)
+        tracer.blocked(question, reason)
+        answer = refusal_text()
+        tracer.answer(answer, time.time() - start)
+        return {"answer": answer, "blocked": True, "result": None}
+
+    config = {"configurable": {"user_id": user_id}, "recursion_limit": 30,
+              "callbacks": [tracer, *(callbacks or [])]}
     result = await app.ainvoke({"messages": [HumanMessage(content=question)]}, config=config)
-    return {"answer": get_text(result["messages"][-1]), "result": result}
+    answer = get_text(result["messages"][-1])
+    tracer.answer(answer, time.time() - start)
+    return {"answer": answer, "blocked": False, "result": result}
 
 
 async def _main(question: str, user_id: str):
