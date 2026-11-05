@@ -13,7 +13,7 @@
   - 확인: unittest가 SERVICE.md 5.1 정답표(2025-08 → 2026-08)와 100% 일치 (S2)
 - [x] **T4 Chroma 색인** + `search_requirements` (1h)
   - 확인: `python -m src.rag.index` 후 평가 1~9번 질문 검색 시 상위 결과에 기대 ID 8개 이상 (S3 사전 점검)
-- [ ] **T5 MCP 서버** (`diff_versions`) (0.5h)
+- [x] **T5 MCP 서버** (`diff_versions`) (0.5h)
   - 확인: MCP 클라이언트로 도구 목록 조회·호출 → 추가 8건 확인
 - [ ] **T6 Supervisor** + 하위 에이전트 3개 + CLI (1h)
   - 확인: `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` → 영문 답변 + `### 한국어 번역`, 8개 ID 포함 (S1)
