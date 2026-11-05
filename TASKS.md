@@ -25,7 +25,7 @@
   - 확인: 문항 2~3개로 judge 점수와 RAGAS 4개 지표(0~1)가 나오고 `round0_report.md` 생성
 - [x] **T10 라운드 1 평가** (0.5h)
   - 확인: `evaluation/round1_report.md`에 유형별 통과율, S1~S11 충족 여부, RAGAS 평균, 실패 원인, 개선 계획 기록
-- [ ] **T11 개선 → 라운드 2 평가** (1h)
+- [x] **T11 개선 → 라운드 2 평가** (1h)
   - 확인: `evaluation/round2_report.md`에서 라운드 1 대비 변화 기록. 기능 13/16 이상, 안전 4/4, no_answer 지어낸 답 0건, faithfulness 0.8 이상 (S4~S6, S11)
 
 ## 2단계 (시간 되는 대로, 순서대로) — 목표: 11/6 12:30까지
