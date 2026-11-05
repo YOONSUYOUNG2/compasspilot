@@ -53,6 +53,12 @@ class TestDashboard(unittest.TestCase):
         self.assertRegex(self.html, r'<details class="sec"><summary id="evalsum">')
         self.assertNotRegex(self.html, r'<details class="sec" open')
 
+    def test_cert_targets_section(self):  # 대상 대비 실적(숫자만)
+        t = self.data["certs"]["targets"]
+        self.assertEqual((t["total"]["target"], t["total"]["achieved"]), (41, 27))
+        self.assertEqual(t["by_person"]["people"], 28)
+        self.assertEqual(t["checks"]["duplicate_rows"], 1)
+
     def test_no_employee_names(self):
         self.assertFalse([n for n in employee_names() if n in self.html])
 

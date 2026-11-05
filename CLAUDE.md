@@ -57,7 +57,8 @@ mini-pjt/
 │  │  └─ search.py           # search_requirements 도구
 │  ├─ workforce/
 │  │  ├─ directory.py        # 사용자 권한·소속 조회
-│  │  └─ certifications.py   # 집계·명단 도구 (권한 검사)
+│  │  ├─ certifications.py   # 집계·명단 도구 (권한 검사)
+│  │  └─ targets.py          # 취득 대상 대비 실적 집계 (숫자만, 대시보드용)
 │  ├─ guards/
 │  │  ├─ input_guard.py      # 입력 가드레일 (교안 방식)
 │  │  └─ masking.py          # 이름 마스킹
@@ -77,7 +78,7 @@ mini-pjt/
 │  └─ architecture.md        # 구조 다이어그램 (Mermaid)
 ├─ data/
 │  ├─ private/versions/      # 실제 Assessment Excel, 버전별 (git 제외, 내용 수정 금지)
-│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, org_users.json)
+│  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json)
 │  └─ derived/               # 버전별 파싱 결과(requirements_<버전>.json)·산출물 추출 결과 (git 제외, 재생성 가능)
 ├─ reports/                  # 생성된 보고서·dashboard.html (git 제외)
 └─ ref/                      # 교안 레퍼런스 (git 제외, 수정 금지)

@@ -97,7 +97,13 @@ def certification_data() -> dict | None:
     divisions = sorted({r["division"] for r in rows})
     vendors = sorted({r["vendor"] for r in rows})
     by_div_vendor = Counter((r["division"], r["vendor"]) for r in rows)
+    try:  # 대상 대비 실적(사내 취합 양식 구조). 대상 파일이 없으면 None
+        from src.workforce.targets import load_targets, target_status
+        targets = target_status() if load_targets() else None
+    except Exception as e:  # noqa: BLE001 — 대상 데이터 문제로 대시보드가 멈추지 않게 한다
+        targets = {"error": f"{type(e).__name__}: {e}"}
     return {
+        "targets": targets,
         "total": len(rows),
         "employees": len({r["employee_id"] for r in rows}),
         "by_vendor": dict(sorted(Counter(r["vendor"] for r in rows).items())),
@@ -231,7 +237,7 @@ function renderVersions() {
 }
 
 // 탭·필터 상태는 버전을 바꿔도 유지한다
-const STATE = {tab: 'prep', q: '', level: '', scope: ''};
+const STATE = {tab: 'prep', q: '', level: '', scope: '', orgLevel: 'by_team'};
 const LEVEL_CLASS = {'상': 'bad', '중': 'note', '하': 'ok'};
 const noteSpan = n => el('span', {class: 'note'}, n ? '[내부 메모] ' + n : '');
 
@@ -306,15 +312,62 @@ function drawAll(pane, v) {
 }
 
 function renderCerts() {
-  const box = document.getElementById('cert'); box.replaceChildren(el('h2', {}, '② 임직원 자격 보유 현황 (숫자만, 가상 데이터)'));
+  const box = document.getElementById('cert'); box.replaceChildren(el('h2', {}, '② 임직원 자격 현황 (숫자만, 가상 데이터)'));
   const C = D.certs; if (!C) { box.append(el('p', {class: 'muted'}, '데이터 없음')); return; }
+  const T = C.targets && !C.targets.error ? C.targets : null;
+  if (T) drawTargets(box, T);
+  else box.append(el('p', {class: 'muted'}, '대상 데이터 없음' + (C.targets && C.targets.error ? ' (' + C.targets.error + ')' : '')));
+
+  box.append(el('h3', {}, '보유 자격 (대상 여부와 무관한 전체 보유)'));
   box.append(el('div', {class: 'kpis'}, kpi(C.total, '자격 건수'), kpi(C.employees, '보유 인원'),
     ...Object.entries(C.by_vendor).map(([v, n]) => kpi(n, v))));
   const max = Math.max(...C.by_cert.map(x => x[1]));
   box.append(el('h3', {}, '자격증별 건수'), table(['자격증', '건수', ''], C.by_cert.map(([c, n]) =>
     [c, String(n), el('div', {class: 'bar', style: `width:$${Math.round(120 * n / max)}px`})])));
-  box.append(el('h3', {}, '사업부 × 벤더'), table(['사업부', ...C.vendors], C.divisions.map((d, i) => [d, ...C.matrix[i].map(String)])));
+  box.append(el('h3', {}, '사업부 × 벤더 (보유 건수)'), table(['사업부', ...C.vendors], C.divisions.map((d, i) => [d, ...C.matrix[i].map(String)])));
   box.append(el('p', {class: 'muted'}, '명단(이름)은 CLI에서 권한별로만 조회됩니다: 인사팀 전사 · 담당 사업부 · 팀장 팀 · 그룹장 그룹.'));
+}
+
+const pct = r => r == null ? '-' : (r * 100).toFixed(1) + '%';
+const rateBar = r => el('div', {class: 'bar', style: `width:$${Math.round(120 * (r || 0))}px`});
+
+function drawTargets(box, T) {
+  const P = T.by_person;
+  box.append(el('p', {class: 'rule'}, '취득 대상(data/sample/cert_targets.csv) 대비 실적입니다. 대상 벤더의 자격을 1건 이상 보유하면 취득으로 봅니다. 벤더별은 연인원, 사람별은 실인원 기준입니다.'));
+  box.append(el('div', {class: 'kpis'}, kpi(T.total.target, '대상 (연인원)'), kpi(T.total.achieved, '취득'),
+    kpi(T.total.not_achieved, '미취득'), kpi(pct(T.total.rate), '취득률'), kpi(P.people, '대상 인원 (실인원)'),
+    kpi(P.all, '전부 취득'), kpi(P.partial, '일부 취득'), kpi(P.none, '미취득 (0건)')));
+
+  box.append(el('h3', {}, '1. 벤더별 취득 현황 (연인원)'), table(['벤더', '대상', '취득', '미취득', '취득률', ''], [
+    ...T.vendors.map(v => { const x = T.by_vendor[v]; return [v, String(x.target), String(x.achieved), String(x.not_achieved), pct(x.rate), rateBar(x.rate)]; }),
+    [el('b', {}, '합계'), String(T.total.target), String(T.total.achieved), String(T.total.not_achieved), pct(T.total.rate), rateBar(T.total.rate)]]));
+
+  const ratio = n => pct(P.people ? n / P.people : null);
+  box.append(el('h3', {}, '2. 사람별 취득 현황 (실인원)'), table(['구분', '인원', '비율'], [
+    ['취득 대상 인원', String(P.people), ratio(P.people)], ['전부 취득 (대상 벤더 모두)', String(P.all), ratio(P.all)],
+    ['일부 취득', String(P.partial), ratio(P.partial)], ['미취득 (0건)', String(P.none), ratio(P.none)],
+    ['(참고) 2개 이상 벤더 대상자', String(P.multi_vendor), ratio(P.multi_vendor)]]));
+
+  const LEVELS = [['by_division', '사업부'], ['by_team', '팀'], ['by_group', '그룹']];
+  const lv = el('select', {'aria-label': '조직 단위'}, ...LEVELS.map(([k, n]) => el('option', {value: k}, n + '별')));
+  lv.value = STATE.orgLevel;
+  const holder = el('div');
+  const drawOrg = () => {
+    const depth = LEVELS.findIndex(([k]) => k === lv.value) + 1;
+    const heads = ['사업부', '팀', '그룹'].slice(0, depth);
+    holder.replaceChildren(table([...heads, '대상 인원', ...T.vendors.map(v => v + ' 대상/취득'), '취득률'],
+      T[lv.value].map(r => [...r.org, String(r.people), ...T.vendors.map(v => r.vendors[v].target ? `$${r.vendors[v].target} / $${r.vendors[v].achieved}` : '-'), pct(r.rate)])));
+  };
+  lv.addEventListener('change', () => { STATE.orgLevel = lv.value; drawOrg(); });
+  box.append(el('h3', {}, '3. 조직별 취득 현황'), el('div', {class: 'row'}, el('label', {}, '조직 단위'), lv), holder);
+  drawOrg();
+
+  const K = T.checks;
+  const bad = n => el('span', {class: n ? 'bad' : 'ok'}, String(n));
+  box.append(el('h3', {}, '점검'), table(['항목', '건수', '설명'], [
+    ['조직도에 없는 사번', bad(K.unknown_employee_ids), '0이어야 정상. 집계에서 제외했습니다'],
+    ['중복 입력 행', bad(K.duplicate_rows), '0이어야 정상. 한 번만 집계했습니다'],
+    ['대상이 아닌데 보유', String(K.holders_not_target), '참고. 대상 목록 누락인지 확인하세요']]));
 }
 
 function renderEval() {

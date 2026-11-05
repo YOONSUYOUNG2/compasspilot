@@ -48,5 +48,7 @@
 
 - [x] **T19 대시보드 세부 수정**(사용자 검토 반영): 버전 칸 탭 3개, 난이도·산출물 한 표로 합침, 검색·난이도·범위 필터, 평가 결과 접기
   - 확인: unittest(S10 + 화면 구성), 가짜 DOM 동작 시험(탭 클릭·필터·버전 전환 12개) 통과, 이름 0건
+- [x] **T20 자격 대상 대비 실적**(사내 취합 양식 구조 반영): `cert_targets.csv`(가상), `workforce/targets.py` 집계, 대시보드 ② 칸
+  - 확인: unittest(규칙·가상 데이터 정답·이름 0건), 가짜 DOM 동작 시험(조직 단위 전환·점검 표) 통과
 - [ ] **T18 제출**: 최종 라운드 평가·보고서, `evaluation/unittest_log.txt`, `docs/architecture.md`(Mermaid), 대시보드 갱신, GitHub 저장소 생성 → 올릴 파일 목록 확인 → push, 패들릿 제출
   - 확인: 저장소에 `.env`·`data/private`·`ref` 없음, 최종 라운드 보고서가 SERVICE.md 기준(S4~S6, S11) 충족
