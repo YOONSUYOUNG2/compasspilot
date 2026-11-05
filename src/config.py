@@ -19,8 +19,9 @@ REPORTS_DIR = ROOT / "reports"
 EVAL_DIR = ROOT / "evaluation"
 TRACE_PATH = ROOT / "trace.jsonl"
 
-EXCEL_OLD = PRIVATE_DIR / "(OLD) AWS Migration and Modernization Competency Self-Assessment_20251216.xlsx"
-EXCEL_NEW = PRIVATE_DIR / "(NEW) AWS Migration and Modernization Competency Self-Assessment_20261007.xlsx"
+# 버전별 Assessment Excel 폴더. 새 버전은 여기에 넣고 색인 명령을 실행한다.
+# 버전 이름은 파일명이 아니라 Excel 안의 Validity Period로 정한다.
+VERSIONS_DIR = PRIVATE_DIR / "versions"
 
 # ── 모델 (CLAUDE.md 2절 표와 같아야 한다) ──────────────────────────────────
 PRIMARY_REGION = "us-east-1"

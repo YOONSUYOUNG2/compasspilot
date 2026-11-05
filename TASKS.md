@@ -7,10 +7,10 @@
 
 - [x] **T1 환경**: requirements.txt(버전 고정), venv, `src/config.py`, `src/llm.py`(대체 모델 포함) (1h)
   - 확인: `python -m src.llm` → Sonnet 응답 1줄 + Titan 임베딩 차원(1024) 출력. Python 3.14에서 설치가 실패하면 사용자에게 3.12 설치 여부 확인
-- [ ] **T2 Excel 파서** + 테스트 (1h)
-  - 확인: unittest 통과 — OLD 47개·NEW 55개, Validity Period 저장, internal_note 분리
-- [ ] **T3 버전 비교** `diff.py` + 테스트 (1h)
-  - 확인: unittest가 SERVICE.md 5.1 정답표와 100% 일치 (S2)
+- [x] **T2 Excel 파서** + 버전 등록(`data/private/versions/`) + 테스트 (1h)
+  - 확인: unittest 통과 — 2025-08 판 47개·2026-08 판 55개, Validity Period로 버전 구분, 같은 버전 중복 거절, internal_note 분리
+- [ ] **T3 버전 비교** `diff.py`(두 버전 지정, 기본 최신 vs 직전) + 테스트 (1h)
+  - 확인: unittest가 SERVICE.md 5.1 정답표(2025-08 → 2026-08)와 100% 일치 (S2)
 - [ ] **T4 Chroma 색인** + `search_requirements` (1h)
   - 확인: `python -m src.rag.index` 후 평가 1~9번 질문 검색 시 상위 결과에 기대 ID 8개 이상 (S3 사전 점검)
 - [ ] **T5 MCP 서버** (`diff_versions`) (0.5h)
@@ -34,7 +34,7 @@
   - 확인: unittest — 권한·소속별 명단 정답 100%, 범위 밖 거절 (S7)
 - [ ] **T13 ① 연결·마스킹**: `workforce_agent` 연결 + 이름 마스킹(답변·trace) + 평가 21~27번 추가 (1h)
   - 확인: unittest + trace 검색에서 staff 이름 0건 (S8), 평가 재실행(다음 라운드 보고서)
-- [ ] **T14 ② HTML 대시보드** + 테스트 (1h)
+- [ ] **T14 ② HTML 대시보드**(버전 드롭다운 포함) + 테스트 (1.5h)
   - 확인: `python -m src.dashboard` → `reports/dashboard.html`이 브라우저에서 열림, 변경 건수 정답 일치·이름 0건 (S10)
 - [ ] **T15 ③ 난이도**: 준비 상태 가상 데이터 + `assess_difficulty` + 테스트 + 평가 28~29번 (1h)
   - 확인: unittest 규칙 100% 일치 (S9)
