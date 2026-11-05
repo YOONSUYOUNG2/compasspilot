@@ -19,7 +19,7 @@
   - 확인: `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` → 영문 답변 + `### 한국어 번역`, 8개 ID 포함 (S1)
 - [x] **T7 입력 가드레일** + FileTracer (1h)
   - 확인: 주입 문장 → `Sorry, I can't process that request.`, 정상 질문 통과, `trace.jsonl` 기록
-- [ ] **T8 평가셋** 1단계 20문항(참조 답변 포함) + `run_eval.py` 수정 (1h)
+- [x] **T8 평가셋** 1단계 20문항(참조 답변 포함) + `run_eval.py` 수정 (1h)
   - 확인: `python -m evaluation.run_eval --round 0` → 규칙 판정 결과가 담긴 `eval_result_round0.json` 생성 (시험 실행)
 - [ ] **T9 LLM judge + RAGAS 지표** `evaluation/judge.py` + 라운드 보고서 자동 생성 (1h)
   - 확인: 문항 2~3개로 judge 점수와 RAGAS 4개 지표(0~1)가 나오고 `round0_report.md` 생성

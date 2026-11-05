@@ -19,6 +19,7 @@ from src.guards.input_guard import input_guard, log_block, refusal_text  # noqa:
 from src.tracer import FileTracer  # noqa: E402
 warnings.showwarning = _show
 logging.getLogger("langchain_aws").setLevel(logging.ERROR)  # 도구 블록 변환 안내 로그 숨김
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="langchain_aws")  # 같은 안내의 경고판
 
 DEFAULT_USER = "staff"
 
