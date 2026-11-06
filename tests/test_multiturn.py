@@ -15,7 +15,7 @@ from src.tracer import FileTracer
 EN = "The 2026-08 version adds eight requirements such as [ID: POV-007] and [ID: ARA-001]."
 
 
-def answer(en=EN, note="[내부 메모] 신규 요청사항 추가"):
+def answer(en=EN, note="[내부 메모] 테스트용 더미 메모"):
     return f"{en}\n\n### 한국어 번역\n2026-08 판에 8개가 추가되었습니다.\n{note}"
 
 
