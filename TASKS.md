@@ -72,5 +72,5 @@
   - 확인: unittest(가상 trace로 집계 규칙·원문 미포함, 실제 trace 질문 수), 가짜 DOM 동작 시험, 스크린샷. 에이전트 코드 변경 없음
 - [x] **T31 멀티턴 대화**(사용자 요청): `main.ask(history=...)`, `--chat` 모드, 앞 대화는 최근 3턴 영문 부분만, trace에 턴 번호, 멀티턴 시나리오 점검
   - 확인: unittest(메시지 구성·3턴 제한·메모 제외·history 없으면 기존과 동일), 실제 3턴 시나리오(이어 묻기·대화 중 주입 차단·권한 유지), 에이전트 단일 질문 경로는 그대로라 라운드 12 유지
-- [ ] **T18 제출**: 최종 라운드 평가·보고서, `evaluation/unittest_log.txt`, `docs/architecture.md`(Mermaid), 대시보드 갱신, GitHub 저장소 생성 → 올릴 파일 목록 확인 → push, 패들릿 제출
+- [x] **T18 제출**: 최종 라운드 평가·보고서, `evaluation/unittest_log.txt`, `docs/architecture.md`(Mermaid), 대시보드 갱신, GitHub 저장소 생성 → 올릴 파일 목록 확인 → push, 패들릿 제출
   - 확인: 저장소에 `.env`·`data/private`·`ref` 없음, 최종 라운드 보고서가 SERVICE.md 기준(S4~S6, S11) 충족

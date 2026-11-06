@@ -1,12 +1,12 @@
 # CompassPilot 구조
 
-> 기준 커밋: T17 (2026-11-05). 2절은 `app.get_graph().draw_mermaid()`가 자동으로 만든 그래프이고, 1절은 그 앞뒤의 가드레일·후처리·데이터를 포함한 전체 흐름이다.
+> 기준 커밋: T31 (2026-11-06). 에이전트 그래프(2절)는 T17 이후 바뀌지 않았다. 2절은 `app.get_graph().draw_mermaid()`가 자동으로 만든 그래프이고, 1절은 그 앞뒤의 가드레일·후처리·데이터를 포함한 전체 흐름이다.
 
 ## 1. 전체 흐름
 
 ```mermaid
 flowchart TD
-    U["사용자 질문<br/>python -m src.main --user &lt;id&gt;"] --> G{"입력 가드레일<br/>① 정규식 ② Haiku 판별(확신도 &gt; 0.7)"}
+    U["사용자 질문<br/>python -m src.main --user &lt;id&gt;<br/>(--chat: 앞 대화 최근 3턴 영문 부분만 붙임)"] --> G{"입력 가드레일<br/>① 정규식 ② Haiku 판별(확신도 &gt; 0.7)"}
     G -- 주입 --> R1["고정 문구 거절<br/>Sorry, I can't process that request."]
     G -- 정상 --> S["Supervisor<br/>(Sonnet 4.5, langgraph-supervisor)"]
 
@@ -41,7 +41,13 @@ flowchart TD
     IDX --> P
     IDX --> V
     IDX --> D
-    P --> DB["python -m src.dashboard<br/>reports/dashboard.html (LLM 호출 없음)"]
+    P --> DB["python -m src.dashboard<br/>reports/dashboard.html (LLM 호출 없음)<br/>시트: 현주소·Competency·임직원 자격·자체 평가·운영 지표"]
+    RD --> IM["변경 영향 (impact.py)<br/>버전 비교 × 준비 상태"]
+    IM --> DB
+    CS[("data/private/cases<br/>2023 심사 제출본 + 대응표")] --> CA["2023 사례 재활용 (cases.py)"]
+    CA --> DB
+    TR --> OPS["운영 지표 (ops.py)<br/>숫자 집계만"]
+    OPS --> DB
 ```
 
 | 구분 | 역할 | 판정 주체 |
@@ -54,7 +60,8 @@ flowchart TD
 | `list_deliverables` | 산출물과 고객 사례 체크리스트, 집계 | 미리 추출한 파일 + 파이썬 집계 |
 | `count_certifications`·`get_certification_details` | 자격 집계(누구나), 명단(권한별) | 파이썬 규칙 |
 | 후처리 | 최종 답 검증·메모 삭제·고정 문구·마스킹·보고서 부록 | 파이썬 규칙 (번역·형식만 LLM) |
-| 대시보드 | 버전·난이도·산출물·자격 집계·평가 결과 | 파이썬(LLM 없음) |
+| 멀티턴 (`--chat`) | 앞 대화 최근 3턴(영문 부분만)을 다음 질문 앞에 붙임. 권한은 대화 시작 때 고정, 가드레일·마스킹은 매 턴 | 파이썬 규칙 |
+| 대시보드 | 버전·변경 영향·난이도·산출물·2023 사례 재활용·자격 집계·평가 결과·운영 지표 | 파이썬(LLM 없음) |
 
 ## 2. LangGraph 그래프 (자동 생성)
 
