@@ -16,8 +16,8 @@ from collections import Counter
 from string import Template
 
 from src import config
-from src.assessment import deliverables, diff, difficulty, parser
-from src.assessment.readiness import LABEL_KO
+from src.assessment import deliverables, diff, difficulty, impact, parser
+from src.assessment.readiness import LABEL_KO, load_readiness
 from src.assessment.templates import embedded, load_templates, match
 
 OUT_PATH = config.REPORTS_DIR / "dashboard.html"
@@ -48,10 +48,28 @@ def version_data() -> dict:
                 "sheet_notes": [{"sheet": n["sheet"], "type": n["change_type"], "changes": n.get("changes", [])}
                                 for n in d["sheet_notes_changed"]],
             }
+            if i == len(labels) - 1:  # 준비 상태는 현재 한 벌뿐이라 최신 버전의 비교에만 적용한다
+                entry["impact"] = impact_data(d, parser.load(labels[i - 1]), data)
         entry["difficulty"] = difficulty_data(label)
         entry["deliverables"] = deliverables_data(label)
         versions[label] = entry
     return {"labels": labels, "latest": labels[-1] if labels else None, "versions": versions}
+
+
+def impact_data(d: dict, old: dict, new: dict) -> dict:
+    """변경 영향 분석(버전 비교 × 준비 상태). 규칙은 assessment/impact.py, 여기서는 화면용 표기만."""
+    try:
+        r = impact.analyze(d, old["requirements"], new["requirements"], load_readiness())
+    except Exception as e:  # noqa: BLE001 — 입력 파일 문제는 화면에 '데이터 없음'으로 보여 준다
+        return {"error": f"{type(e).__name__}: {e}"}
+    notes = {q["id"]: q.get("internal_note") or "" for q in old["requirements"] + new["requirements"]}
+    return {"counts": r["counts"], "sheet_notes": r["sheet_notes"],
+            "labels": impact.LABEL_KO, "actions": impact.ACTION_KO,
+            "items": [{"id": i["id"], "title": i["title"], "category": i["category"], "change": i["change"],
+                       "readiness": LABEL_KO[i["readiness"]],
+                       "scope": "회사 차원" if i["scope"] == "company" else "고객 사례 4건",
+                       "changes": i.get("changes", []), "old_text": i.get("old_text", ""),
+                       "new_text": i.get("new_text", ""), "note": notes.get(i["id"], "")} for i in r["items"]]}
 
 
 def difficulty_data(label: str) -> dict:
@@ -257,6 +275,10 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .note{color:var(--note);font-size:12px;white-space:pre-line}
 .chg{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-line}
 .rule{font-size:12px;color:var(--muted);margin:0 0 8px}
+.nw{white-space:nowrap}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+.alert{border:1px solid var(--line);border-left:4px solid var(--warning);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
 select,input[type=search],.btn{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 input[type=search]{min-width:180px}.btn{cursor:pointer;padding:4px 12px}.btn:hover{border-color:var(--accent)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
@@ -282,7 +304,7 @@ tr.detail td{background:var(--bg)}
 svg text{fill:var(--muted);font-size:11px}
 .tip{position:fixed;display:none;pointer-events:none;z-index:10;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:320px}
 footer{max-width:1200px;margin:auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
-@media (max-width:700px){.sum{grid-template-columns:1fr}.hero{font-size:44px}}
+@media (max-width:700px){.sum,.cmp{grid-template-columns:1fr}.hero{font-size:44px}}
 @media print{body{background:#fff;color:#000}.btn,.row,.tabs,.exp,.tip,.tpl,.sheets,.sheet[hidden]{display:none!important}
 section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 </style></head><body>
@@ -418,6 +440,14 @@ function renderSummary() {
   if (df) tiles.append(kpi(df.counts.high, '난이도 상', '3~4점 · 먼저 착수'));
   if (dv) tiles.append(kpi(dv.total, '준비할 산출물', '양식 연결 ' + (dv.linked || 0) + '개 · 고객 사례 항목 ' + dv.customer + '개'));
   comp.append(el('div', {class: 'sum'}, left, el('div', {}, tiles)));
+  const im = ok(v.impact);
+  if (im) {
+    const goIm = el('button', {class: 'btn', type: 'button'}, '변경 영향 보기');
+    goIm.addEventListener('click', () => { STATE.tab = 'impact'; renderVersions(); goSheet('comp', 'ver'); });
+    comp.append(el('div', {class: 'alert', style: 'border-left-color:var(--critical)'},
+      el('b', {}, '버전 변경 영향 (' + d.from + ' → ' + V.latest + ') '),
+      ...IMPACT.map(c => el('span', {style: 'margin-right:12px'}, impactChip(im, c), ' ' + im.counts[c] + '개')), goIm));
+  }
   box.append(comp);
   if (df) {
     const byDel = Object.fromEntries((dv ? dv.items : []).map(i => [i.id, i]));
@@ -479,7 +509,9 @@ function renderVersions() {
     if (df) k.append(kpi(df.counts.high, '난이도 상'));
     if (dv) k.append(kpi(dv.total, '산출물'));
     body.append(k);
-    const TABS = [['changes', d ? '변경 내역 (' + nChanges + ')' : '변경 내역'], ['prep', '준비 현황 (난이도·산출물)'],
+    const im = ok(v.impact);
+    const TABS = [['changes', d ? '변경 내역 (' + nChanges + ')' : '변경 내역'],
+                  ['impact', im ? '변경 영향 (재작업 ' + im.counts.rework + ')' : '변경 영향'], ['prep', '준비 현황 (난이도·산출물)'],
                   ['all', '요구사항 전체 (' + v.total + ')']];
     const pane = el('div');
     const buttons = TABS.map(([key, name]) => { const b = el('button', {class: 'tab', type: 'button', 'data-tab': key}, name);
@@ -489,6 +521,7 @@ function renderVersions() {
       for (const b of buttons) b.className = 'tab' + (b.getAttribute('data-tab') === STATE.tab ? ' on' : '');
       pane.replaceChildren();
       if (STATE.tab === 'changes') drawChanges(pane, v, label);
+      else if (STATE.tab === 'impact') drawImpact(pane, v, dv);
       else if (STATE.tab === 'prep') drawPrep(pane, v, df, dv, label);
       else drawAll(pane, v);
     };
@@ -526,8 +559,9 @@ function expTable(heads, rows) {
     let det = null;
     btn.addEventListener('click', () => {
       if (det) { det.remove(); det = null; btn.textContent = '▸'; btn.setAttribute('aria-expanded', 'false'); return; }
-      det = el('tr', {class: 'detail'}, el('td', {colspan: String(ncol)},
-        el('div', {class: 'orig'}, el('b', {}, 'AWS 원문 · ' + r.req.id), r.req.text || '(원문 없음)')));
+      const cur = el('div', {class: 'orig'}, el('b', {}, (r.req.old_text ? '새 원문 · ' : 'AWS 원문 · ') + r.req.id), r.req.text || '(원문 없음)');
+      det = el('tr', {class: 'detail'}, el('td', {colspan: String(ncol)}, r.req.old_text
+        ? el('div', {class: 'cmp'}, el('div', {class: 'orig'}, el('b', {}, '이전 원문 · ' + r.req.id), r.req.old_text), cur) : cur));
       tr.after(det); btn.textContent = '▾'; btn.setAttribute('aria-expanded', 'true');
     });
     tbody.append(tr);
@@ -553,6 +587,43 @@ function drawChanges(pane, v, label) {
       el('span', {class: 'chg'}, changesText(n.changes)), '']),
   ];
   pane.append(table(['구분', 'ID', '제목', '바뀐 부분', '내부 메모'], rows));
+}
+
+// ── 변경 영향: 버전 비교 × 준비 상태 (구분은 파이썬 규칙 assessment/impact.py, 여기서는 보여만 준다) ──
+const CRLF = String.fromCharCode(13, 10);
+const IMPACT = ['rework', 'start', 'wording', 'retire'];
+const IMPACT_COLOR = {rework: 'var(--critical)', start: 'var(--warning)', wording: 'var(--s1)', retire: 'var(--other)'};
+const IMPACT_INK = {start: DARK_INK, retire: DARK_INK};
+const impactChip = (m, c) => el('span', {class: 'chip'}, el('i', {class: 'dot', style: 'background:' + IMPACT_COLOR[c], 'aria-hidden': 'true'}), m.labels[c]);
+function drawImpact(pane, v, dv) {
+  const m = ok(v.impact);
+  if (!m) { pane.append(el('p', {class: 'muted'}, v.impact ? '데이터 없음 (변경 영향: ' + v.impact.error + ')'
+    : '변경 영향은 최신 버전에만 계산합니다(준비 상태는 현재 상태 한 벌뿐입니다).')); return; }
+  const k = m.counts;
+  pane.append(el('h4', {}, v.diff.from + ' → ' + v.label + ' 변경이 우리 준비에 주는 영향'),
+    el('div', {class: 'kstrip'}, ...IMPACT.map(c => ktile(IMPACT_COLOR[c], k[c] + '개', m.labels[c], m.actions[c]))));
+  // 막대는 영향받는 항목만 그린다(영향 없음까지 넣으면 재작업 2개가 가는 선이 된다). 영향 없음 개수는 글로 둔다
+  const parts = IMPACT.map(c => ({name: m.labels[c], value: k[c], color: IMPACT_COLOR[c], ink: IMPACT_INK[c], unit: '개'}));
+  pane.append(el('div', {class: 'muted', style: 'margin-bottom:4px'}, '영향받는 항목 ' + m.items.length + '개 구성 · 영향 없음(변경 없음) ' + k.unchanged + '개는 제외'),
+    segBar(parts, '변경 영향 구성'), legend(parts.filter(p => p.value)),
+    el('p', {class: 'rule', style: 'margin-top:8px'}, '재작업 필요 = 실질 변경인데 이미 준비완료·일부, 새 기준으로 착수 = 신규 또는 실질 변경인데 미준비, '
+      + '문구 확인 = 경미 변경(표기·오타), 준비 자료 정리 = 삭제됐는데 준비해 둔 항목 (파이썬 규칙). 준비 상태는 data/sample/readiness.csv(가상 데이터)입니다.'));
+  for (const n of m.sheet_notes)
+    pane.append(el('div', {class: 'alert', role: 'note'}, el('b', {}, '⚠ 시트 안내문 변경 · ' + n.sheet),
+      ' — 이 시트의 항목 전체를 새 안내문 기준으로 다시 읽어 보세요. (바뀐 부분은 "변경 내역" 탭)'));
+  if (!m.items.length) { pane.append(el('p', {class: 'muted'}, '영향받는 항목이 없습니다.')); return; }
+  const byDel = Object.fromEntries((dv ? dv.items : []).map(i => [i.id, i]));
+  const byReq = Object.fromEntries(v.requirements.map(r => [r.id, r]));
+  const rows = m.items.map(i => ({req: {id: i.id, text: i.new_text || (byReq[i.id] || {}).text || '', old_text: i.old_text},
+    cells: [impactChip(m, i.category), el('span', {class: 'nw'}, i.id), i.title,
+      el('span', {class: 'nw'}, TYPE[i.change] || (i.change === 'removed' ? '삭제' : i.change)), el('span', {class: 'nw'}, i.readiness),
+      i.changes.length ? el('span', {class: 'chg'}, changesText(i.changes)) : '', delivCell(byDel[i.id]), noteSpan(i.note)]}));
+  const csv = el('button', {class: 'btn', type: 'button'}, 'CSV 내보내기');
+  csv.addEventListener('click', () => download('impact_' + v.label + '.csv', '﻿' + [['구분', 'ID', '제목', '변경', '현재 준비 상태', '할 일', '산출물'],
+    ...m.items.map(i => [m.labels[i.category], i.id, i.title, TYPE[i.change] || i.change, i.readiness, m.actions[i.category],
+      byDel[i.id] ? byDel[i.id].deliverables.join(' / ') : ''])].map(a => a.map(csvCell).join(',')).join(CRLF)));
+  pane.append(el('div', {class: 'row'}, el('span', {class: 'muted'}, '영향 항목 ' + m.items.length + '개 · ▸를 누르면 이전·새 원문이 나란히 펼쳐집니다'), csv),
+    expTable(['구분', 'ID', '제목', '변경', '현재 준비 상태', '바뀐 부분', '산출물 (새 기준)', '내부 메모'], rows));
 }
 
 function csvCell(x) { const s = String(x == null ? '' : x); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }

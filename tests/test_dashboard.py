@@ -46,8 +46,17 @@ class TestDashboard(unittest.TestCase):
         mob = next(i for i in dv["items"] if i["id"] == "MOB-004")
         self.assertEqual(mob["cases"], "고객 사례 4건 중 2건 이상")
 
-    def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 3개, 검색·필터
-        for key in ("'changes'", "'prep'", "'all'"):
+    def test_impact_section(self):  # T28 변경 영향: 최신 버전에만, SERVICE.md 3절 정답
+        vs = self.data["versions"]["versions"]
+        self.assertNotIn("impact", vs["2025-08"])
+        im = vs["2026-08"]["impact"]
+        self.assertEqual({k: im["counts"][k] for k in ("rework", "start", "wording", "retire", "unchanged", "sheet_notes")},
+                         {"rework": 2, "start": 8, "wording": 2, "retire": 0, "unchanged": 43, "sheet_notes": 1})
+        self.assertEqual([i["id"] for i in im["items"][:2]], ["POV-001", "PS-001"])
+        self.assertTrue(all(i["old_text"] and i["new_text"] for i in im["items"] if i["category"] == "rework"))
+
+    def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 4개, 검색·필터
+        for key in ("'changes'", "'impact'", "'prep'", "'all'"):
             self.assertIn(key, self.html)
         self.assertIn('type: \'search\'', self.html)
         sheets = re.findall(r'<div class="sheet" id="sheet-(\w+)"[^>]*?(hidden)?>', self.html)
