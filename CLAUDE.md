@@ -52,6 +52,7 @@ mini-pjt/
 │  │  ├─ diff.py             # 버전 비교
 │  │  ├─ readiness.py        # 준비 상태 로드·환산
 │  │  ├─ difficulty.py       # 난이도 점수
+│  │  ├─ cases.py            # 2023 심사 제출본 읽기·2026 대응 매트릭스(대시보드 전용)
 │  │  ├─ impact.py           # 변경 영향 분석(버전 비교 × 준비 상태, 대시보드 전용)
 │  │  ├─ deliverables.py     # 산출물 사전 추출(LLM)·조회
 │  │  └─ templates.py        # 산출물 ↔ 양식 연결(파이썬 규칙)·대시보드 내장용 인코딩
@@ -83,6 +84,7 @@ mini-pjt/
 │  └─ dev-guide.md           # 교안 개발 가이드 (스펙 주도 개발 규칙, 원래 루트 README.md)
 ├─ data/
 │  ├─ private/versions/      # 실제 Assessment Excel, 버전별 (git 제외, 내용 수정 금지)
+│  ├─ private/cases/         # 2023 실제 심사 제출본 + 2023↔2026 대응표 (git 제외, 고객사명은 화면·코드·문서에 쓰지 않음)
 │  ├─ sample/                # 가상 데이터 (readiness.csv, certifications.csv, cert_targets.csv, org_users.json, templates/ 산출물 양식 15종, partner_benchmark.csv·tier_criteria.csv 등급 비교)
 │  └─ derived/               # 버전별 파싱 결과(requirements_<버전>.json)·산출물 추출 결과 (git 제외, 재생성 가능)
 ├─ reports/                  # 생성된 보고서·dashboard.html (git 제외)

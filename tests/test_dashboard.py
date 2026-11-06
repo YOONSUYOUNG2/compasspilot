@@ -55,8 +55,21 @@ class TestDashboard(unittest.TestCase):
         self.assertEqual([i["id"] for i in im["items"][:2]], ["POV-001", "PS-001"])
         self.assertTrue(all(i["old_text"] and i["new_text"] for i in im["items"] if i["category"] == "rework"))
 
-    def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 4개, 검색·필터
-        for key in ("'changes'", "'impact'", "'prep'", "'all'"):
+    def test_cases_section_no_submission_text(self):  # T29: 2023 제출본의 응답·증빙 문구(고객사명 등)가 HTML에 없다
+        from src.assessment import cases, parser
+        path = cases.case_file()
+        if path is None:
+            self.skipTest("2023 심사 제출본 없음")
+        x = self.data["cases"]
+        self.assertEqual((len(x["rows"]), x["submission"]["met_cells"]), (55, 88))
+        lines = {ln.strip() for rows in parser.read_xlsx(path).values() for _, c in rows for v in c.values()
+                 for ln in v.splitlines() if len(ln.strip()) >= 12 and re.search(r"[가-힣]", ln)}
+        self.assertGreater(len(lines), 50)
+        self.assertEqual([ln for ln in lines if ln in self.html], [])
+        self.assertNotIn(path.stem, self.html)
+
+    def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 5개, 검색·필터
+        for key in ("'changes'", "'impact'", "'prep'", "'cases'", "'all'"):
             self.assertIn(key, self.html)
         self.assertIn('type: \'search\'', self.html)
         sheets = re.findall(r'<div class="sheet" id="sheet-(\w+)"[^>]*?(hidden)?>', self.html)

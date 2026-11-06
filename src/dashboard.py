@@ -16,7 +16,7 @@ from collections import Counter
 from string import Template
 
 from src import config
-from src.assessment import deliverables, diff, difficulty, impact, parser
+from src.assessment import cases, deliverables, diff, difficulty, impact, parser
 from src.assessment.readiness import LABEL_KO, load_readiness
 from src.assessment.templates import embedded, load_templates, match
 
@@ -183,8 +183,21 @@ def benchmark_data() -> dict:
         return {"error": f"{type(e).__name__}: {e}"}
 
 
+def cases_data() -> dict:
+    """2023 심사 제출본 재활용 매트릭스(최신 버전 기준). 고객사명·응답 본문·증빙 파일명은 넣지 않는다(개수만)."""
+    try:
+        r = cases.build()
+    except Exception as e:  # noqa: BLE001 — 대응표·파일 문제는 화면에 '데이터 없음'으로 보여 준다
+        return {"error": f"{type(e).__name__}: {e}"}
+    if r is None:
+        return {"error": "2023 심사 제출본 없음 (data/private/cases/)"}
+    for row in r["rows"]:
+        row["scope"] = "회사 차원" if row["scope"] == "company" else "고객 사례 4건"
+    return {**r, "cell_ko": cases.CELL_KO}
+
+
 def build_data() -> dict:
-    return {"versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
+    return {"cases": cases_data(), "versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
             "templates": embedded(load_templates()), "benchmark": benchmark_data(), "not_implemented": []}
 
 
@@ -276,6 +289,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .chg{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-line}
 .rule{font-size:12px;color:var(--muted);margin:0 0 8px}
 .nw{white-space:nowrap}
+.mx{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.bars{display:grid;grid-template-columns:60px 1fr 70px;gap:6px 10px;align-items:center}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
 .alert{border:1px solid var(--line);border-left:4px solid var(--warning);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
@@ -512,6 +527,7 @@ function renderVersions() {
     const im = ok(v.impact);
     const TABS = [['changes', d ? '변경 내역 (' + nChanges + ')' : '변경 내역'],
                   ['impact', im ? '변경 영향 (재작업 ' + im.counts.rework + ')' : '변경 영향'], ['prep', '준비 현황 (난이도·산출물)'],
+                  ['cases', '2023 사례 재활용'],
                   ['all', '요구사항 전체 (' + v.total + ')']];
     const pane = el('div');
     const buttons = TABS.map(([key, name]) => { const b = el('button', {class: 'tab', type: 'button', 'data-tab': key}, name);
@@ -522,6 +538,7 @@ function renderVersions() {
       pane.replaceChildren();
       if (STATE.tab === 'changes') drawChanges(pane, v, label);
       else if (STATE.tab === 'impact') drawImpact(pane, v, dv);
+      else if (STATE.tab === 'cases') drawCases(pane, v, label);
       else if (STATE.tab === 'prep') drawPrep(pane, v, df, dv, label);
       else drawAll(pane, v);
     };
@@ -624,6 +641,55 @@ function drawImpact(pane, v, dv) {
       byDel[i.id] ? byDel[i.id].deliverables.join(' / ') : ''])].map(a => a.map(csvCell).join(',')).join(CRLF)));
   pane.append(el('div', {class: 'row'}, el('span', {class: 'muted'}, '영향 항목 ' + m.items.length + '개 · ▸를 누르면 이전·새 원문이 나란히 펼쳐집니다'), csv),
     expTable(['구분', 'ID', '제목', '변경', '현재 준비 상태', '바뀐 부분', '산출물 (새 기준)', '내부 메모'], rows));
+}
+
+// ── 2023 심사 사례 재활용: 2026 항목 × 사례 1~4 (판정은 파이썬 assessment/cases.py, 대응표는 사람이 확인) ──
+const CASE_COLOR = {reuse: C.ready, adapt: C.partial, new: C.none};
+const LEVEL_KO = {same: '같은 요구', partial: '일부 대응', none: '대응 없음'};
+const CELL_SHORT = {reuse: '재활용', adapt: '보완', new: '신규'};
+function drawCases(pane, v, label) {
+  const X = ok(D.cases);
+  if (!X) { pane.append(el('p', {class: 'muted'}, '데이터 없음' + (D.cases && D.cases.error ? ' (' + D.cases.error + ')' : ''))); return; }
+  if (label !== D.versions.latest) { pane.append(el('p', {class: 'muted'}, '2023 사례 재활용은 최신 버전(' + D.versions.latest + ' 판) 기준으로만 계산합니다.')); return; }
+  const K = X.cell_ko, total = X.rows.length, c0 = X.by_case[0];
+  pane.append(el('h4', {}, '2023년 실제 심사 제출본(사례 4건)을 ' + label + ' 판에 얼마나 다시 쓸 수 있나'),
+    el('p', {class: 'rule'}, '원본: ' + X.version_2023 + ' · 회사 차원 ' + (X.submission.items - X.submission.customer_items) + '개 + 고객 사례 '
+      + X.submission.customer_items + '개 × 사례 4건 (Yes ' + X.submission.met_cells + '/' + X.submission.customer_items * 4 + ') · 고객사명은 표시하지 않음'),
+    el('div', {class: 'kstrip'}, ...['reuse', 'adapt', 'new'].map(s => ktile(CASE_COLOR[s], c0[s] + '개', K[s],
+      {reuse: '같은 요구 → 날짜·범위만 갱신', adapt: '근거로 쓰되 2026 요건 보완', new: '2026 신규 요구 → 새로 준비'}[s] + ' (' + total + '개 중)'))));
+  const parts = ['reuse', 'adapt', 'new'].map(s => ({name: K[s], value: c0[s], color: CASE_COLOR[s], ink: s === 'adapt' ? DARK_INK : undefined, unit: '개'}));
+  pane.append(segBar(parts, '2023 자료 재활용 구성'), legend(parts));
+  pane.append(el('div', {class: 'alert', role: 'note'}, el('b', {}, '⚠ 36개월 기준'),
+    ' — ' + label + ' 판 DES-001은 최근 36개월 안의 프로젝트를 요구합니다. 2023 사례는 그대로 다시 내기보다 방법론·양식·증빙 구성을 새 사례에 옮겨 쓰는 용도입니다.'));
+  if (X.same_id_diff.length)
+    pane.append(el('div', {class: 'alert', role: 'note', style: 'border-left-color:var(--critical)'},
+      el('b', {}, '⚠ ID만 같고 내용이 다른 항목 ' + X.same_id_diff.length + '개'), ' — 옛 자료를 같은 ID로 찾으면 틀립니다: ',
+      X.same_id_diff.map(x => '2026 ' + x.id + ' ← ' + (x.ids_2023.length ? '2023 ' + x.ids_2023.join('·') : '대응 없음')).join(', ')));
+  // 사례별 증빙 파일 수 (대응 항목 합계) — 어느 사례 자료가 가장 풍부한가
+  const ev = [0, 1, 2, 3].map(k => X.rows.reduce((a, r) => a + r.cells[k].evidence, 0)), mx = Math.max(...ev, 1);
+  pane.append(el('h4', {style: 'margin-top:12px'}, '사례별 2023 증빙 파일 수 (대응 항목 합계, 공용 파일 중복 포함)'),
+    el('div', {class: 'bars'}, ...ev.flatMap((n, k) => [el('span', {}, '사례 ' + (k + 1)),
+      meter(n / mx, '사례 ' + (k + 1) + ' 증빙 ' + n + '개', 'var(--s1)'), el('span', {class: 'muted'}, n + '개')])));
+  const byReq = Object.fromEntries(v.requirements.map(r => [r.id, r]));
+  const holder = el('div');
+  const redraw = () => {
+    holder.replaceChildren();
+    const rows = X.rows.filter(r => matchQ(r) && (!STATE.scope || r.scope === STATE.scope));
+    count.textContent = rows.length + '개';
+    holder.append(expTable(['ID', '제목 · 대응 설명', '대응 수준', '2023 근거', '사례 1', '사례 2', '사례 3', '사례 4'],
+      rows.map(r => ({req: byReq[r.id] || {id: r.id, text: ''}, cells: [el('span', {class: 'nw'}, r.id),
+        el('div', {}, r.title, el('div', {class: 'muted', style: 'font-size:12px'}, r.basis)), el('span', {class: 'nw'}, LEVEL_KO[r.level]),
+        el('span', {class: 'nw'}, r.ids_2023.join(', ') || '-'),
+        ...r.cells.map(c => el('span', {class: 'mx', style: '--c:' + CASE_COLOR[c.status], title: K[c.status] + ' · 2023 증빙 ' + c.evidence + '개'},
+          CELL_SHORT[c.status] + (c.evidence ? ' · ' + c.evidence : '')))]}))));
+  };
+  const csv = el('button', {class: 'btn', type: 'button'}, 'CSV 내보내기');
+  csv.addEventListener('click', () => download('cases_2023_to_' + label + '.csv', '﻿' + [['ID', '제목', '범위', '대응 수준', '2023 근거',
+    '사례 1', '사례 2', '사례 3', '사례 4', '설명'], ...X.rows.map(r => [r.id, r.title, r.scope, LEVEL_KO[r.level], r.ids_2023.join(' / '),
+    ...r.cells.map(c => K[c.status] + ' (' + c.evidence + ')'), r.basis])].map(a => a.map(csvCell).join(',')).join(CRLF)));
+  pane.append(el('p', {class: 'rule', style: 'margin-top:12px'}, '칸 = 판정(재활용 / 보완 = 보완 후 재활용 / 신규 = 새로 준비) · 2023 증빙 파일 수. 대응 항목이 그 사례에서 모두 Yes면 같은 요구 → 재활용, 일부 대응 → 보완 후 재활용, 대응 없음 → 새로 준비 (파이썬 규칙). 대응표는 두 원문을 읽고 사람이 확인한 data/private/cases/mapping_2023_2026.csv입니다. ▸를 누르면 2026 원문이 펼쳐집니다.'));
+  const count = filterBar(pane, {extra: [csv]}, redraw);
+  pane.append(holder); redraw();
 }
 
 function csvCell(x) { const s = String(x == null ? '' : x); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }

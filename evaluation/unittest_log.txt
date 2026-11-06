@@ -1,7 +1,7 @@
 # CompassPilot unittest 실행 기록
 # 실행: python -m unittest discover -s tests -v
-# 일시: 2026-11-06 09:25 (KST), Python 3.14.8, 커밋 2cefe94 + T28(변경 영향 분석)
-# 실제 Assessment Excel(data/private, git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 Excel이 필요한 테스트가 skip된다.
+# 일시: 2026-11-06 10:12 (KST), Python 3.14.8, 커밋 c640fe7 + T29(2023 심사 사례 재활용)
+# 실제 Assessment Excel·2023 심사 제출본(data/private, git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 그 파일이 필요한 테스트가 skip된다.
 
 test_already_has_phrase (test_answer_rules.TestNotCoveredPhrase.test_already_has_phrase) ... ok
 test_korean_section_ignored (test_answer_rules.TestNotCoveredPhrase.test_korean_section_ignored) ... ok
@@ -27,7 +27,16 @@ test_anonymous_names_only (test_benchmark.TestSampleData.test_anonymous_names_on
 test_invalid_files (test_benchmark.TestSampleData.test_invalid_files) ... ok
 test_our_display_name_from_private_file (test_benchmark.TestSampleData.test_our_display_name_from_private_file) ... ok
 test_sample (test_benchmark.TestSampleData.test_sample) ... ok
+test_any_not_met_means_new (test_cases.TestCellRule.test_any_not_met_means_new) ... ok
+test_levels (test_cases.TestCellRule.test_levels) ... ok
+test_missing_2023_id_means_new (test_cases.TestCellRule.test_missing_2023_id_means_new) ... ok
+test_columns_found_by_name (test_cases.TestHeaderAndEvidence.test_columns_found_by_name) ... ok
+test_evidence_count (test_cases.TestHeaderAndEvidence.test_evidence_count) ... ok
+test_invalid_mapping_raises (test_cases.TestMappingAndMatrix.test_invalid_mapping_raises) ... ok
+test_matrix_counts_and_checks (test_cases.TestMappingAndMatrix.test_matrix_counts_and_checks) ... ok
+test_submission_and_matrix (test_cases.TestRealSubmission.test_submission_and_matrix) ... ok
 test_benchmark_section (test_dashboard.TestDashboard.test_benchmark_section) ... ok
+test_cases_section_no_submission_text (test_dashboard.TestDashboard.test_cases_section_no_submission_text) ... ok
 test_cert_targets_section (test_dashboard.TestDashboard.test_cert_targets_section) ... ok
 test_deliverables_section (test_dashboard.TestDashboard.test_deliverables_section) ... ok
 test_diff_counts_match_answer_table (test_dashboard.TestDashboard.test_diff_counts_match_answer_table) ... ok
@@ -145,6 +154,6 @@ test_user_from_config (test_workforce.TestTools.test_user_from_config) ... ok
 test_user_id_not_an_argument (test_workforce.TestTools.test_user_id_not_an_argument) ... ok
 
 ----------------------------------------------------------------------
-Ran 139 tests in 18.038s
+Ran 148 tests in 18.747s
 
 OK
