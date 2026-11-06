@@ -3,11 +3,12 @@
 회사의 CSP 파트너 등급은 **회사가 취득한 Competency**와 **임직원 자격 보유 현황**, 이 두 축으로 정해집니다. CompassPilot은 두 축을 한곳에서 관리하는 사내 에이전트입니다. 첫 적용 대상은 AWS Migration and Modernization(M&M) Competency입니다.
 
 - **질문에 답하는 에이전트(CLI)**: Requirement 원문을 근거 ID와 함께 찾고, Assessment 버전 차이를 비교합니다. 준비 난이도와 필요 산출물을 알려 주고, 권한에 따라 임직원 자격 현황을 보여 줍니다.
-- **한 화면 대시보드(HTML 파일 1개, 엑셀처럼 시트 4개)**
+- **한 화면 대시보드(HTML 파일 1개, 엑셀처럼 시트 5개)**
   - **현주소**: 우리 회사의 파트너 등급과 순위를 익명 대형 SI 5개 사와 비교합니다(가상 수치). 다음 등급까지 남은 조건과 "M&M Competency를 취득하면 어떻게 바뀌는가"도 보여 줍니다.
   - **Competency**: 버전 변경 내역, 변경 영향(버전이 바뀌어 다시 손봐야 할 준비 항목), 2023 실제 심사 사례 재활용 매트릭스(2026 항목 × 사례 4건), 준비 현황(난이도·산출물 체크리스트·양식 내려받기)
   - **임직원 자격**: 취득 대상 대비 실적
   - **자체 평가**: 평가 결과
+  - **운영 지표**: 실행 기록(`trace.jsonl`)을 숫자로 집계(라우팅·도구 호출·차단·자동 수정·답변 시간·토큰). 원문은 넣지 않음
 
 > 기획(무엇을·왜): [SERVICE.md](SERVICE.md) · 구현 규칙(어떻게): [CLAUDE.md](CLAUDE.md) · 작업 기록: [TASKS.md](TASKS.md) · 구조도: [docs/architecture.md](docs/architecture.md)
 
@@ -67,7 +68,7 @@ copy .env.example .env        # AWS 액세스 키 입력 (Bedrock: Sonnet 4.5, H
 | LLM judge 평균 | **4.89 / 5** |
 | faithfulness · answer relevancy · context precision · context recall | 0.981 · 0.768 · 0.887 · 0.991 |
 | 성공 기준 S3(검색 출처 9/9) · S4(기능 22/22) · S5(안전 10/10) · S6(지어낸 답 0) · S11(faithfulness ≥ 0.8) | 모두 충족 |
-| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드, 자격 대상 실적, 산출물 양식, 현주소 비교, 변경 영향, 2023 사례 재활용 등) | 148개 통과 |
+| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드, 자격 대상 실적, 산출물 양식, 현주소 비교, 변경 영향, 2023 사례 재활용, 운영 지표 등) | 153개 통과 |
 
 - 라운드별 실패 원인과 개선 내용은 `evaluation/round0_report.md` ~ [round12_report.md](evaluation/round12_report.md)에 있습니다.
 - 개선 사례: 평가 측정 오류 수정, Supervisor가 맞는 답을 망가뜨리는 문제를 코드 검증으로 차단, 동시 실행 충돌 수정, LLM이 개수를 잘못 세는 문제를 파이썬 집계로 대체.

@@ -68,12 +68,26 @@ class TestDashboard(unittest.TestCase):
         self.assertEqual([ln for ln in lines if ln in self.html], [])
         self.assertNotIn(path.stem, self.html)
 
+    def test_ops_section_numbers_only(self):  # T30: trace 집계는 숫자만, 질문·답변 원문 없음
+        from src import config
+        from src.ops import load_events
+        events = load_events()
+        if not events:
+            self.skipTest("trace.jsonl 없음")
+        ops = self.data["ops"]
+        self.assertEqual(ops["questions"], sum(e["event"] == "question" for e in events))
+        dumped = json.dumps(ops, ensure_ascii=False)
+        texts = {e.get(k) for e in events for k in ("input", "output", "last_input")
+                 if isinstance(e.get(k), str) and len(e.get(k)) >= 8}
+        self.assertEqual([t for t in texts if t in dumped], [])
+        self.assertNotIn(config.PERMISSION_REFUSAL, dumped)
+
     def test_layout_sheets_tabs_filters(self):  # 시트 4개(현주소가 첫 화면), 버전 칸 탭 5개, 검색·필터
         for key in ("'changes'", "'impact'", "'prep'", "'cases'", "'all'"):
             self.assertIn(key, self.html)
         self.assertIn('type: \'search\'', self.html)
         sheets = re.findall(r'<div class="sheet" id="sheet-(\w+)"[^>]*?(hidden)?>', self.html)
-        self.assertEqual(sheets, [("home", ""), ("comp", "hidden"), ("cert", "hidden"), ("eval", "hidden")])
+        self.assertEqual(sheets, [("home", ""), ("comp", "hidden"), ("cert", "hidden"), ("eval", "hidden"), ("ops", "hidden")])
         # 각 시트에 맞는 칸이 들어 있다
         self.assertRegex(self.html, re.compile(
             r'id="sheet-home".*?id="home".*?id="sheet-comp".*?id="summary".*?id="ver".*?id="sheet-cert".*?id="summary2".*?id="cert"'

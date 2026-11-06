@@ -16,6 +16,7 @@ from collections import Counter
 from string import Template
 
 from src import config
+from src.ops import ops_metrics
 from src.assessment import cases, deliverables, diff, difficulty, impact, parser
 from src.assessment.readiness import LABEL_KO, load_readiness
 from src.assessment.templates import embedded, load_templates, match
@@ -196,8 +197,17 @@ def cases_data() -> dict:
     return {**r, "cell_ko": cases.CELL_KO}
 
 
+def ops_data() -> dict:
+    """운영 지표(trace.jsonl 숫자 집계, 원문 없음)."""
+    try:
+        r = ops_metrics()
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"{type(e).__name__}: {e}"}
+    return r if r else {"error": "trace.jsonl 없음 (질문을 실행하면 생깁니다)"}
+
+
 def build_data() -> dict:
-    return {"cases": cases_data(), "versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
+    return {"ops": ops_data(), "cases": cases_data(), "versions": version_data(), "certs": certification_data(), "eval": evaluation_data(),
             "templates": embedded(load_templates()), "benchmark": benchmark_data(), "not_implemented": []}
 
 
@@ -291,6 +301,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .nw{white-space:nowrap}
 .mx{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
 .bars{display:grid;grid-template-columns:60px 1fr 70px;gap:6px 10px;align-items:center}
+.grid2.two{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+.bars.wide{grid-template-columns:minmax(110px,max-content) 1fr 56px;font-size:13px}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
 .alert{border:1px solid var(--line);border-left:4px solid var(--warning);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
@@ -331,6 +343,7 @@ section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 <button type="button" role="tab" class="sheet-tab" id="tab-comp" data-sheet="comp">Competency</button>
 <button type="button" role="tab" class="sheet-tab" id="tab-cert" data-sheet="cert">임직원 자격</button>
 <button type="button" role="tab" class="sheet-tab" id="tab-eval" data-sheet="eval">자체 평가</button>
+<button type="button" role="tab" class="sheet-tab" id="tab-ops" data-sheet="ops">운영 지표</button>
 </nav>
 <main>
 <div class="sheet" id="sheet-home" role="tabpanel" aria-labelledby="tab-home">
@@ -347,6 +360,9 @@ section{border:0;padding:0;overflow:visible}tr{break-inside:avoid}}
 </div>
 <div class="sheet" id="sheet-eval" role="tabpanel" aria-labelledby="tab-eval" hidden>
 <section id="eval"></section>
+</div>
+<div class="sheet" id="sheet-ops" role="tabpanel" aria-labelledby="tab-ops" hidden>
+<section id="ops"></section>
 </div>
 </main>
 <div id="tip" class="tip" role="tooltip"></div>
@@ -890,6 +906,55 @@ function renderEval() {
       i.detail, fmt(i.judge), fmt(i.faith)])));
 }
 
+// ── 운영 지표: trace.jsonl 숫자 집계 (원문 없음, 집계는 파이썬 src/ops.py) ──
+const AGENT_KO = {assessment_agent: '검색 (assessment)', competency_agent: 'Competency 계산 (MCP)', workforce_agent: '임직원 자격 (권한)', general_agent: '일반'};
+const ROLE_KO = {staff: '일반', hr: '인사팀', division_head: '사업부장', team_leader: '팀장', group_leader: '그룹장'};
+const REPAIR_KO = {permission: "'권한 없음' 오판", not_covered: "'문서에 없음' 오판", empty_english: '영문 부분 누락', other: '기타'};
+const nfmt = n => n == null ? '-' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n);
+function hbars(entries, color, unit) {  // [[이름, 값]] → 가로 막대 (값은 글로도 둔다)
+  const mx = Math.max(1, ...entries.map(e => e[1]));
+  return el('div', {class: 'bars wide'}, ...entries.flatMap(([name, n]) => [el('span', {}, name),
+    meter(n / mx, name + ' ' + n + (unit || '건'), color), el('span', {class: 'muted'}, n + (unit || '건'))]));
+}
+function renderOps() {
+  const box = document.getElementById('ops'); if (!box) return;
+  box.replaceChildren(el('h2', {}, '운영 지표'));
+  const O = ok(D.ops);
+  if (!O) { box.append(el('p', {class: 'muted'}, '데이터 없음' + (D.ops && D.ops.error ? ' (' + D.ops.error + ')' : ''))); return; }
+  box.append(el('p', {class: 'muted'}, 'trace.jsonl 집계 · ' + O.period.from + ' ~ ' + O.period.to
+    + ' · 지금 기록은 대부분 평가 라운드 실행분이라, 실제 사용 통계가 아니라 시스템이 어떻게 동작했는지 보여 줍니다. 숫자만 넣고 질문·답변 원문은 넣지 않았습니다.'));
+  const R = O.refusals, rep = Object.values(O.repairs).reduce((a, b) => a + b, 0), gb = Object.values(O.guard_blocks).reduce((a, b) => a + b, 0);
+  const lerr = Object.values(O.llm.errors).reduce((a, b) => a + b, 0);
+  box.append(el('div', {class: 'kstrip'},
+    ktile('var(--accent)', O.questions + '건', '질문', '답변 ' + O.answers + '건' + (O.questions > O.answers ? ' · 미완료 ' + (O.questions - O.answers) + '건' : '')),
+    ktile('var(--s3)', O.latency_s.p50 == null ? '-' : O.latency_s.p50.toFixed(1) + '초', '답변 시간 (중앙값)', '90%가 ' + (O.latency_s.p90 == null ? '-' : O.latency_s.p90.toFixed(1)) + '초 안 · 최대 ' + (O.latency_s.max == null ? '-' : O.latency_s.max.toFixed(0)) + '초'),
+    ktile('var(--s2)', gb + R.permission + '건', '안전 동작', '주입 차단 ' + gb + ' · 권한 거절 ' + R.permission),
+    ktile('var(--s4)', rep + '건', '최종 답 자동 수정', '파이썬 규칙이 잘못된 최종 답을 고침'),
+    ktile('var(--s1)', nfmt(O.llm.calls), 'LLM 호출', '토큰 입력 ' + nfmt(O.llm.input_tokens) + ' · 출력 ' + nfmt(O.llm.output_tokens))));
+  const routing = Object.entries(O.routing).map(([k, n]) => [AGENT_KO[k] || k, n]);
+  const tools = Object.entries(O.tools);
+  const toolCard = el('div', {class: 'card'}, el('h4', {}, '도구 호출'),
+    hbars(tools.map(([k, t]) => [k, t.calls]), 'var(--s3)', '회'),
+    table(['도구', '호출', '평균 시간', '오류'], tools.map(([k, t]) => [k, String(t.calls), t.avg_latency_s == null ? '-' : (t.avg_latency_s < 0.01 ? '0.01초 미만' : t.avg_latency_s + '초'),
+      t.errors ? el('span', {class: 'bad'}, '⚠ ' + t.errors) : '0'])));
+  const safety = el('div', {class: 'card'}, el('h4', {}, '안전·품질 동작'),
+    el('div', {}, statusChip(gb, '입력 가드레일 차단 (규칙 ' + (O.guard_blocks.rule || 0) + ' · LLM ' + (O.guard_blocks.llm || 0) + ')', false),
+      statusChip(R.permission, '권한 거절 답변', false), statusChip(R.not_covered, '문서에 없음 답변', false),
+      statusChip(O.reports_saved, '보고서 저장', false)),
+    el('p', {class: 'rule', style: 'margin-top:6px'}, '차단·거절은 정상 동작입니다(평가셋의 주입·권한 문항). 자동 수정은 Supervisor 최종 답이 도구 결과와 어긋날 때 파이썬 규칙이 바로잡은 횟수입니다.'),
+    el('h4', {style: 'margin-top:12px'}, '최종 답 자동 수정 (사유별)'),
+    rep ? hbars(Object.entries(O.repairs).map(([k, n]) => [REPAIR_KO[k] || k, n]), 'var(--s4)') : el('p', {class: 'muted'}, '없음'),
+    el('h4', {style: 'margin-top:12px'}, '모델 호출 오류 (대체 모델로 넘김)'),
+    lerr ? hbars(Object.entries(O.llm.errors).map(([k, n]) => [k, n]), 'var(--critical)') : el('p', {class: 'muted'}, '없음'));
+  box.append(el('div', {class: 'grid2 two'},
+    el('div', {class: 'card'}, el('h4', {}, 'Supervisor → 하위 에이전트 라우팅'), hbars(routing, 'var(--s1)', '회'),
+      el('h4', {style: 'margin-top:12px'}, '권한별 질문 수'),
+      hbars(Object.entries(O.by_role).map(([k, n]) => [ROLE_KO[k] || k, n]), 'var(--s2)')),
+    safety, toolCard,
+    el('div', {class: 'card'}, el('h4', {}, '시간대별 질문 수'),
+      hbars(Object.entries(O.by_hour).map(([h, n]) => [h.slice(5).replace(' ', ' ') + '시', n]), 'var(--accent)'))));
+}
+
 function renderTodo() {
   const box = document.getElementById('todo');
   if (!D.not_implemented.length) { box.remove ? box.remove() : box.replaceChildren(); return; }
@@ -1062,7 +1127,7 @@ function scatterMap(B, nt, P) {
 }
 
 // ── 시트 전환 (엑셀 시트처럼). 고른 시트는 주소 #view=comp·cert·eval에 남겨 새로고침·공유해도 유지한다 ──
-const SHEETS = ['home', 'comp', 'cert', 'eval'];
+const SHEETS = ['home', 'comp', 'cert', 'eval', 'ops'];
 function showSheet(key, keepHash) {
   if (!SHEETS.includes(key)) key = 'home';
   for (const k of SHEETS) {
@@ -1079,7 +1144,7 @@ function goSheet(key, targetId) { showSheet(key); const t = document.getElementB
   if (t && t.scrollIntoView) t.scrollIntoView({behavior: 'smooth'}); }
 
 const pb = document.getElementById('printbtn'); if (pb) pb.addEventListener('click', () => window.print());
-renderVersions(); renderSummary(); renderCerts(); renderEval(); renderTodo(); renderHome();
+renderVersions(); renderSummary(); renderCerts(); renderEval(); renderOps(); renderTodo(); renderHome();
 showSheet(((typeof location !== 'undefined' && location.hash) || '').replace(/^#(view=)?/, ''), true);
 </script></body></html>
 """)

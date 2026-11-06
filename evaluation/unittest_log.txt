@@ -1,7 +1,7 @@
 # CompassPilot unittest 실행 기록
 # 실행: python -m unittest discover -s tests -v
-# 일시: 2026-11-06 10:12 (KST), Python 3.14.8, 커밋 c640fe7 + T29(2023 심사 사례 재활용)
-# 실제 Assessment Excel·2023 심사 제출본(data/private, git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 그 파일이 필요한 테스트가 skip된다.
+# 일시: 2026-11-06 10:20 (KST), Python 3.14.8, 커밋 06d7bba + T30(운영 지표)
+# 실제 Assessment Excel·2023 심사 제출본(data/private)과 trace.jsonl(git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 그 파일이 필요한 테스트가 skip된다.
 
 test_already_has_phrase (test_answer_rules.TestNotCoveredPhrase.test_already_has_phrase) ... ok
 test_korean_section_ignored (test_answer_rules.TestNotCoveredPhrase.test_korean_section_ignored) ... ok
@@ -44,6 +44,7 @@ test_difficulty_section (test_dashboard.TestDashboard.test_difficulty_section) .
 test_impact_section (test_dashboard.TestDashboard.test_impact_section) ... ok
 test_layout_sheets_tabs_filters (test_dashboard.TestDashboard.test_layout_sheets_tabs_filters) ... ok
 test_no_employee_names (test_dashboard.TestDashboard.test_no_employee_names) ... ok
+test_ops_section_numbers_only (test_dashboard.TestDashboard.test_ops_section_numbers_only) ... ok
 test_original_text_and_short_reasons (test_dashboard.TestDashboard.test_original_text_and_short_reasons) ... ok
 test_self_contained (test_dashboard.TestDashboard.test_self_contained) ... ok
 test_summary_csv_print_present (test_dashboard.TestDashboard.test_summary_csv_print_present) ... ok
@@ -101,6 +102,10 @@ test_assess_difficulty (test_mcp.TestMcpServer.test_assess_difficulty) ... ok
 test_list_deliverables (test_mcp.TestMcpServer.test_list_deliverables) ... ok
 test_tools_and_default_diff (test_mcp.TestMcpServer.test_tools_and_default_diff) ... ok
 test_unknown_version (test_mcp.TestMcpServer.test_unknown_version) ... ok
+test_counts (test_ops.TestOps.test_counts) ... ok
+test_missing_or_broken_file (test_ops.TestOps.test_missing_or_broken_file) ... ok
+test_no_raw_text (test_ops.TestOps.test_no_raw_text) ... ok
+test_percentile (test_ops.TestOps.test_percentile) ... ok
 test_counts (test_parser.TestParserRealFiles.test_counts) ... ok
 test_internal_notes (test_parser.TestParserRealFiles.test_internal_notes) ... ok
 test_no_korean_in_aws_text (test_parser.TestParserRealFiles.test_no_korean_in_aws_text) ... ok
@@ -154,6 +159,6 @@ test_user_from_config (test_workforce.TestTools.test_user_from_config) ... ok
 test_user_id_not_an_argument (test_workforce.TestTools.test_user_id_not_an_argument) ... ok
 
 ----------------------------------------------------------------------
-Ran 148 tests in 18.747s
+Ran 153 tests in 18.822s
 
 OK

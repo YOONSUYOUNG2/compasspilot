@@ -70,7 +70,8 @@ mini-pjt/
 │  ├─ agents.py              # build_app(): Supervisor + 하위 에이전트
 │  ├─ tracer.py              # FileTracer (마스킹 연결 지점, 2단계 ①에서 활성화)
 │  ├─ report.py              # 보고서 파일 저장
-│  ├─ dashboard.py           # HTML 대시보드 생성 (시트: 현주소 / Competency / 임직원 자격 / 자체 평가)
+│  ├─ dashboard.py           # HTML 대시보드 생성 (시트: 현주소 / Competency / 임직원 자격 / 자체 평가 / 운영 지표)
+│  ├─ ops.py                 # 운영 지표: trace.jsonl 숫자 집계(원문 없음, 대시보드 전용)
 │  ├─ benchmark.py           # 현주소: 파트너 등급 순위·격차·다음 등급 조건·취득 전망 (가상 비교 데이터)
 │  └─ main.py                # CLI
 ├─ evaluation/
