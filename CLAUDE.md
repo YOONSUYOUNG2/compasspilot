@@ -109,6 +109,8 @@ python -m src.assessment.deliverables
 
 # 질문 실행 (--user 생략 시 staff)
 python -m src.main --user <user_id> "질문"
+# 멀티턴 대화 (앞 대화 최근 3턴 기억, /new 새 대화, /exit 종료)
+python -m src.main --user <user_id> --chat
 
 # 대시보드 생성 (2단계 ②, 결과: reports/dashboard.html)
 python -m src.dashboard

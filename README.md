@@ -50,6 +50,7 @@ copy .env.example .env        # AWS 액세스 키 입력 (Bedrock: Sonnet 4.5, H
 | Assessment 파싱·색인·산출물 추출 (Excel을 `data/private/versions/`에 넣은 뒤) | `python -m src.rag.index` |
 | 질문 (일반 권한) | `python -m src.main "이번 버전에서 새로 추가된 요구사항 알려줘"` |
 | 질문 (권한 지정) | `python -m src.main --user hr01 "임직원 이름이랑 자격증 목록 전부 보여줘"` |
+| 멀티턴 대화 (앞 질문을 이어서, `/new` 새 대화, `/exit` 종료) | `python -m src.main --chat` → "새로 추가된 요구사항 알려줘" → "그중 난이도 상인 건?" |
 | 보고서 저장 (`reports/날짜_주제_en.md`, `_ko.md`) | `python -m src.main "고객 사례 4건 준비용 산출물 체크리스트를 보고서로 만들어줘"` |
 | 대시보드 생성 → `reports/dashboard.html` | `python -m src.dashboard` |
 | 단위 테스트 | `python -m unittest discover -s tests -v` |
@@ -68,10 +69,11 @@ copy .env.example .env        # AWS 액세스 키 입력 (Bedrock: Sonnet 4.5, H
 | LLM judge 평균 | **4.89 / 5** |
 | faithfulness · answer relevancy · context precision · context recall | 0.981 · 0.768 · 0.887 · 0.991 |
 | 성공 기준 S3(검색 출처 9/9) · S4(기능 22/22) · S5(안전 10/10) · S6(지어낸 답 0) · S11(faithfulness ≥ 0.8) | 모두 충족 |
-| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드, 자격 대상 실적, 산출물 양식, 현주소 비교, 변경 영향, 2023 사례 재활용, 운영 지표 등) | 153개 통과 |
+| 단위 테스트 (S2 버전 비교, S7 권한, S8 마스킹, S9 난이도, S10 대시보드, 자격 대상 실적, 산출물 양식, 현주소 비교, 변경 영향, 2023 사례 재활용, 운영 지표, 멀티턴 등) | 159개 통과 |
 
 - 라운드별 실패 원인과 개선 내용은 `evaluation/round0_report.md` ~ [round12_report.md](evaluation/round12_report.md)에 있습니다.
 - 개선 사례: 평가 측정 오류 수정, Supervisor가 맞는 답을 망가뜨리는 문제를 코드 검증으로 차단, 동시 실행 충돌 수정, LLM이 개수를 잘못 세는 문제를 파이썬 집계로 대체.
+- 멀티턴 대화 점검(3개 시나리오: 이어 묻기·대화 중 주입 차단·권한 유지): **8/8 턴 통과**, [evaluation/multiturn_report.md](evaluation/multiturn_report.md)
 - 공개용 결과 요약: [evaluation/eval_result.json](evaluation/eval_result.json). 답변 전문·검색 원문은 내부 메모가 섞일 수 있어 빼고 올렸습니다.
 
 ## 데이터와 공개 범위

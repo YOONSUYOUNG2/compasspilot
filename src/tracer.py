@@ -64,6 +64,10 @@ class FileTracer(BaseCallbackHandler):
     def report_saved(self, paths: dict):
         self._write({"event": "report_saved", "files": paths})
 
+    def turn(self, session_id: str, turn: int, history_turns: int):
+        """멀티턴 대화의 턴 번호(대화 내용은 남기지 않는다)."""
+        self._write({"event": "turn", "session_id": session_id, "turn": turn, "history_turns": history_turns})
+
     def blocked(self, text: str, reason: str):
         self._write({"event": "guard_block", "input": text, "reason": reason})
 

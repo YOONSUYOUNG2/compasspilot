@@ -1,6 +1,6 @@
 # CompassPilot unittest 실행 기록
 # 실행: python -m unittest discover -s tests -v
-# 일시: 2026-11-06 10:20 (KST), Python 3.14.8, 커밋 06d7bba + T30(운영 지표)
+# 일시: 2026-11-06 10:35 (KST), Python 3.14.8, 커밋 7e2ecab + T31(멀티턴 대화)
 # 실제 Assessment Excel·2023 심사 제출본(data/private)과 trace.jsonl(git 제외)이 있는 로컬에서 실행했다. 다른 환경에서는 그 파일이 필요한 테스트가 skip된다.
 
 test_already_has_phrase (test_answer_rules.TestNotCoveredPhrase.test_already_has_phrase) ... ok
@@ -102,6 +102,12 @@ test_assess_difficulty (test_mcp.TestMcpServer.test_assess_difficulty) ... ok
 test_list_deliverables (test_mcp.TestMcpServer.test_list_deliverables) ... ok
 test_tools_and_default_diff (test_mcp.TestMcpServer.test_tools_and_default_diff) ... ok
 test_unknown_version (test_mcp.TestMcpServer.test_unknown_version) ... ok
+test_history_prepended_and_turn_traced (test_multiturn.TestAskWithHistory.test_history_prepended_and_turn_traced) ... ok
+test_injection_blocked_mid_conversation (test_multiturn.TestAskWithHistory.test_injection_blocked_mid_conversation) ... ok
+test_no_history_same_as_single_question (test_multiturn.TestAskWithHistory.test_no_history_same_as_single_question) ... ok
+test_empty (test_multiturn.TestHistoryMessages.test_empty) ... ok
+test_note_in_english_part_removed_and_truncated (test_multiturn.TestHistoryMessages.test_note_in_english_part_removed_and_truncated) ... ok
+test_recent_turns_english_only (test_multiturn.TestHistoryMessages.test_recent_turns_english_only) ... ok
 test_counts (test_ops.TestOps.test_counts) ... ok
 test_missing_or_broken_file (test_ops.TestOps.test_missing_or_broken_file) ... ok
 test_no_raw_text (test_ops.TestOps.test_no_raw_text) ... ok
@@ -159,6 +165,6 @@ test_user_from_config (test_workforce.TestTools.test_user_from_config) ... ok
 test_user_id_not_an_argument (test_workforce.TestTools.test_user_id_not_an_argument) ... ok
 
 ----------------------------------------------------------------------
-Ran 153 tests in 18.822s
+Ran 159 tests in 18.482s
 
 OK
